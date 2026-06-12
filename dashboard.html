@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Daily Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Amiri:wght@400;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f13;
+    --surface: #17171e;
+    --surface2: #1e1e28;
+    --surface3: #25252f;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #f0eff5;
+    --text2: #9b99b0;
+    --text3: #5e5c72;
+    --gold: #c9a84c;
+    --gold-dim: rgba(201,168,76,0.12);
+    --gold-glow: rgba(201,168,76,0.25);
+    --teal: #3ecfb2;
+    --teal-dim: rgba(62,207,178,0.1);
+    --blue: #5b9cf6;
+    --blue-dim: rgba(91,156,246,0.1);
+    --coral: #f07060;
+    --coral-dim: rgba(240,112,96,0.1);
+    --green: #5bcf8a;
+    --green-dim: rgba(91,207,138,0.1);
+    --purple: #9b7ff4;
+    --purple-dim: rgba(155,127,244,0.1);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* LAYOUT */
+  .shell { max-width: 900px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+
+  /* HEADER */
+  .header { margin-bottom: 2.5rem; }
+  .date-line { font-size: 12px; letter-spacing: 0.1em; color: var(--text3); text-transform: uppercase; margin-bottom: 6px; }
+  .header h1 { font-size: 26px; font-weight: 500; color: var(--text); }
+  .header h1 span { color: var(--gold); }
+
+  /* TABS */
+  .tabs { display: flex; gap: 6px; margin-bottom: 2rem; flex-wrap: wrap; }
+  .tab-btn {
+    padding: 8px 18px; border-radius: 99px;
+    border: 1px solid var(--border2); background: transparent;
+    color: var(--text2); font-family: 'Inter', sans-serif; font-size: 13px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .tab-btn:hover { color: var(--text); border-color: var(--border2); background: var(--surface2); }
+  .tab-btn.active { color: var(--bg); font-weight: 500; border-color: transparent; }
+  .tab-btn[data-tab="quran"].active { background: var(--gold); }
+  .tab-btn[data-tab="driving"].active { background: var(--teal); }
+  .tab-btn[data-tab="fitness"].active { background: var(--blue); }
+  .tab-btn[data-tab="business"].active { background: var(--purple); }
+
+  /* PANELS */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .card-title {
+    font-size: 11px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--text3);
+    margin-bottom: 1rem; font-weight: 500;
+  }
+
+  /* PROGRESS RING */
+  .ring-wrap { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem; }
+  .ring-svg { flex-shrink: 0; }
+  .ring-info h2 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+  .ring-info p { font-size: 14px; color: var(--text2); line-height: 1.5; }
+
+  /* QURAN PANEL */
+  .quran-current {
+    background: var(--gold-dim);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+  .surah-arabic { font-family: 'Amiri', serif; font-size: 32px; color: var(--gold); direction: rtl; line-height: 1.4; margin-bottom: 6px; }
+  .surah-name-en { font-size: 18px; font-weight: 500; margin-bottom: 4px; }
+  .surah-meta { font-size: 13px; color: var(--text2); }
+  .surah-actions { display: flex; gap: 8px; justify-content: center; margin-top: 1.25rem; flex-wrap: wrap; }
+
+  /* BUTTONS */
+  .btn {
+    padding: 9px 20px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border2); background: var(--surface2);
+    color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px;
+    cursor: pointer; transition: all 0.15s; font-weight: 500;
+  }
+  .btn:hover { background: var(--surface3); border-color: var(--border2); }
+  .btn-gold { background: var(--gold); border-color: var(--gold); color: #0f0f13; }
+  .btn-gold:hover { opacity: 0.88; background: var(--gold); }
+  .btn-sm { padding: 6px 14px; font-size: 12px; }
+  .btn-danger { border-color: var(--coral); color: var(--coral); background: var(--coral-dim); }
+
+  /* SURAH LIST */
+  .surah-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 6px; max-height: 400px; overflow-y: auto; padding-right: 4px; }
+  .surah-item {
+    padding: 10px 12px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); background: var(--surface2);
+    cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 10px;
+  }
+  .surah-item:hover { border-color: var(--gold); background: var(--gold-dim); }
+  .surah-item.memorized { border-color: rgba(201,168,76,0.3); background: var(--gold-dim); opacity: 0.6; }
+  .surah-item.active-surah { border-color: var(--gold); background: var(--gold-dim); }
+  .surah-num { font-size: 11px; color: var(--text3); min-width: 24px; }
+  .surah-text .en { font-size: 13px; font-weight: 500; color: var(--text); }
+  .surah-text .ar { font-family: 'Amiri', serif; font-size: 15px; color: var(--gold); direction: rtl; }
+  .surah-check { margin-left: auto; color: var(--gold); font-size: 16px; }
+  .surah-item.memorized .surah-text .en { text-decoration: line-through; color: var(--text3); }
+
+  /* SESSION LOG */
+  .session-log { display: flex; gap: 8px; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
+  .session-log input[type=number] {
+    width: 80px; padding: 8px 10px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border2); background: var(--surface2);
+    color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px;
+  }
+  .session-log label { font-size: 13px; color: var(--text2); }
+
+  /* STREAKS */
+  .streak-dots { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--surface3); border: 1px solid var(--border); }
+  .dot.done-q { background: var(--gold); border-color: var(--gold); }
+  .dot.done-d { background: var(--teal); border-color: var(--teal); }
+  .dot.done-f { background: var(--blue); border-color: var(--blue); }
+  .dot.done-b { background: var(--purple); border-color: var(--purple); }
+
+  /* DRIVING MILESTONES */
+  .milestone-list { display: flex; flex-direction: column; gap: 8px; }
+  .milestone {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 14px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); background: var(--surface2);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .milestone.done-m { opacity: 0.55; }
+  .milestone.done-m .m-title { text-decoration: line-through; color: var(--text3); }
+  .m-check {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 1.5px solid var(--border2); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s; margin-top: 1px;
+  }
+  .milestone.done-m .m-check { background: var(--teal); border-color: var(--teal); }
+  .milestone.done-m .m-check::after { content: '✓'; font-size: 11px; color: #0f0f13; font-weight: 700; }
+  .m-body .m-title { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
+  .m-body .m-note { font-size: 12px; color: var(--text2); line-height: 1.4; }
+  .m-badge {
+    margin-left: auto; font-size: 11px; padding: 3px 10px;
+    border-radius: 99px; flex-shrink: 0; font-weight: 500;
+    align-self: flex-start;
+  }
+  .badge-now { background: rgba(240,112,96,0.15); color: var(--coral); border: 1px solid rgba(240,112,96,0.25); }
+  .badge-sep { background: rgba(62,207,178,0.12); color: var(--teal); border: 1px solid rgba(62,207,178,0.2); }
+  .badge-later { background: var(--surface3); color: var(--text2); border: 1px solid var(--border); }
+
+  /* FITNESS */
+  .workout-check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem; }
+  .workout-check-btn {
+    padding: 18px; border-radius: var(--radius);
+    border: 1px solid var(--border); background: var(--surface2);
+    color: var(--text); font-family: 'Inter', sans-serif;
+    cursor: pointer; transition: all 0.2s; text-align: center;
+  }
+  .workout-check-btn:hover { border-color: var(--blue); }
+  .workout-check-btn.checked { border-color: var(--blue); background: var(--blue-dim); }
+  .workout-check-btn .wc-icon { font-size: 24px; margin-bottom: 6px; }
+  .workout-check-btn .wc-label { font-size: 13px; color: var(--text2); }
+  .workout-check-btn.checked .wc-label { color: var(--blue); }
+
+  .rep-tracker { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem; }
+  .rep-card {
+    padding: 16px; border-radius: var(--radius);
+    border: 1px solid var(--border); background: var(--surface2);
+  }
+  .rep-card .rc-label { font-size: 12px; color: var(--text3); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .rep-card .rc-num { font-size: 36px; font-weight: 300; color: var(--text); margin-bottom: 8px; }
+  .rep-card .rc-best { font-size: 12px; color: var(--text3); }
+  .rep-controls { display: flex; gap: 6px; }
+  .rep-btn {
+    flex: 1; padding: 7px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border2); background: var(--surface3);
+    color: var(--text); font-family: 'Inter', sans-serif; font-size: 16px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .rep-btn:hover { background: var(--surface2); border-color: var(--blue); color: var(--blue); }
+
+  /* BUSINESS */
+  .week-tasks { display: flex; flex-direction: column; gap: 6px; }
+  .week-task {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 11px 13px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); background: var(--surface2);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .week-task:hover { border-color: var(--purple); }
+  .week-task.task-done { opacity: 0.5; }
+  .week-task.task-done .wt-text { text-decoration: line-through; }
+  .wt-box {
+    width: 18px; height: 18px; border-radius: 4px;
+    border: 1.5px solid var(--border2); flex-shrink: 0; margin-top: 1px;
+    display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+  }
+  .week-task.task-done .wt-box { background: var(--purple); border-color: var(--purple); }
+  .week-task.task-done .wt-box::after { content: '✓'; font-size: 10px; color: #fff; font-weight: 700; }
+  .wt-body .wt-text { font-size: 14px; color: var(--text); }
+  .wt-body .wt-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+  /* ADD TASK */
+  .add-task-row { display: flex; gap: 8px; margin-top: 10px; }
+  .add-task-row input[type=text] {
+    flex: 1; padding: 9px 12px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border2); background: var(--surface2);
+    color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px;
+  }
+  .add-task-row input::placeholder { color: var(--text3); }
+
+  /* PROGRESS BAR */
+  .prog-bar-wrap { margin-bottom: 1.25rem; }
+  .prog-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--text3); margin-bottom: 6px; }
+  .prog-bar { height: 4px; background: var(--surface3); border-radius: 99px; overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 99px; transition: width 0.4s ease; }
+
+  /* OVERVIEW GRID */
+  .overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 2rem; }
+  .ov-card {
+    padding: 1rem 1.25rem; border-radius: var(--radius);
+    border: 1px solid var(--border); background: var(--surface);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .ov-card:hover { transform: translateY(-2px); border-color: var(--border2); }
+  .ov-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+  .ov-stat { font-size: 28px; font-weight: 300; margin-bottom: 2px; }
+  .ov-sub { font-size: 12px; color: var(--text2); }
+  .ov-streak { display: flex; gap: 3px; margin-top: 8px; }
+  .ov-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--surface3); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 99px; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7); z-index: 100;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: var(--radius); padding: 1.5rem; max-width: 480px; width: 90%;
+  }
+  .modal h3 { font-size: 17px; font-weight: 500; margin-bottom: 8px; }
+  .modal p { font-size: 14px; color: var(--text2); margin-bottom: 1.25rem; line-height: 1.6; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+  /* RESPONSIVE */
+  @media (max-width: 520px) {
+    .workout-check-grid, .rep-tracker { grid-template-columns: 1fr; }
+    .ring-wrap { flex-direction: column; text-align: center; }
+    .surah-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- HEADER -->
+  <div class="header">
+    <div class="date-line" id="dateLine"></div>
+    <h1>Your daily <span>dashboard</span></h1>
+  </div>
+
+  <!-- OVERVIEW CARDS -->
+  <div class="overview-grid">
+    <div class="ov-card" onclick="switchTab('quran')">
+      <div class="ov-label">Quran</div>
+      <div class="ov-stat" id="ov-quran" style="color:var(--gold)">0</div>
+      <div class="ov-sub">surahs memorized</div>
+      <div class="ov-streak" id="ov-quran-streak"></div>
+    </div>
+    <div class="ov-card" onclick="switchTab('driving')">
+      <div class="ov-label">Driving</div>
+      <div class="ov-stat" id="ov-driving" style="color:var(--teal)">0%</div>
+      <div class="ov-sub">milestones done</div>
+      <div class="ov-streak" id="ov-driving-streak"></div>
+    </div>
+    <div class="ov-card" onclick="switchTab('fitness')">
+      <div class="ov-label">Fitness</div>
+      <div class="ov-stat" id="ov-fitness" style="color:var(--blue)">0</div>
+      <div class="ov-sub">workouts logged</div>
+      <div class="ov-streak" id="ov-fitness-streak"></div>
+    </div>
+    <div class="ov-card" onclick="switchTab('business')">
+      <div class="ov-label">Business</div>
+      <div class="ov-stat" id="ov-business" style="color:var(--purple)">0%</div>
+      <div class="ov-sub">tasks done</div>
+      <div class="ov-streak" id="ov-business-streak"></div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="quran" onclick="switchTab('quran')">🕌 Quran</button>
+    <button class="tab-btn" data-tab="driving" onclick="switchTab('driving')">🚗 Driving</button>
+    <button class="tab-btn" data-tab="fitness" onclick="switchTab('fitness')">💪 Fitness</button>
+    <button class="tab-btn" data-tab="business" onclick="switchTab('business')">💼 Business</button>
+  </div>
+
+  <!-- ========== QURAN PANEL ========== -->
+  <div class="panel active" id="panel-quran">
+
+    <div class="quran-current card" id="quran-current-card">
+      <div class="card-title">Current surah</div>
+      <div class="surah-arabic" id="q-arabic">—</div>
+      <div class="surah-name-en" id="q-name-en">No surah selected</div>
+      <div class="surah-meta" id="q-meta">Pick a surah from the list below to begin</div>
+      <div class="surah-actions" id="q-actions"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Today's session</div>
+      <div class="session-log">
+        <label>Minutes studied today:</label>
+        <input type="number" id="q-minutes" min="0" max="240" placeholder="0">
+        <button class="btn btn-sm" onclick="logQuranSession()">Log</button>
+      </div>
+      <div style="font-size:13px;color:var(--text2)">Total minutes this surah: <strong id="q-total-mins">0</strong></div>
+      <div class="streak-dots" id="q-streak-dots"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">All 114 surahs — pick your own order</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px;">Click any surah to set it as your current focus. Gold = memorized ✓</div>
+      <div class="surah-grid" id="surah-grid"></div>
+    </div>
+  </div>
+
+  <!-- ========== DRIVING PANEL ========== -->
+  <div class="panel" id="panel-driving">
+
+    <div class="card">
+      <div class="card-title">Target date</div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div style="font-size:14px;color:var(--text2)">Aiming to have license by:</div>
+        <input type="date" id="driving-target-date" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;">
+        <div id="driving-days-left" style="font-size:14px;color:var(--teal);font-weight:500;"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <div class="card-title" style="margin-bottom:0">Milestones (Uzbekistan)</div>
+        <div style="font-size:13px;color:var(--text2)" id="driving-pct-label">0 / 10 done</div>
+      </div>
+      <div class="prog-bar-wrap">
+        <div class="prog-bar"><div class="prog-fill" id="driving-prog-fill" style="width:0%;background:var(--teal)"></div></div>
+      </div>
+      <div class="milestone-list" id="milestone-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Daily study log</div>
+      <div class="session-log">
+        <label>Theory practice today (min):</label>
+        <input type="number" id="d-minutes" min="0" max="120" placeholder="0">
+        <button class="btn btn-sm" onclick="logDrivingSession()">Log</button>
+      </div>
+      <div style="font-size:13px;color:var(--text2)">Total theory study: <strong id="d-total-mins">0</strong> min</div>
+      <div class="streak-dots" id="d-streak-dots"></div>
+    </div>
+  </div>
+
+  <!-- ========== FITNESS PANEL ========== -->
+  <div class="panel" id="panel-fitness">
+
+    <div class="card">
+      <div class="card-title">Today's workout</div>
+      <div class="workout-check-grid">
+        <button class="workout-check-btn" id="workout-btn-pushup" onclick="toggleWorkout('pushup')">
+          <div class="wc-icon">🔥</div>
+          <div style="font-size:15px;font-weight:500;margin-bottom:4px;">Push-ups</div>
+          <div class="wc-label" id="wc-pushup-label">Not done today</div>
+        </button>
+        <button class="workout-check-btn" id="workout-btn-pullup" onclick="toggleWorkout('pullup')">
+          <div class="wc-icon">⬆️</div>
+          <div style="font-size:15px;font-weight:500;margin-bottom:4px;">Pull-ups</div>
+          <div class="wc-label" id="wc-pullup-label">Not done today</div>
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Rep tracker — log your set</div>
+      <div class="rep-tracker">
+        <div class="rep-card">
+          <div class="rc-label">Push-ups (reps)</div>
+          <div class="rc-num" id="pushup-reps">0</div>
+          <div class="rc-best" id="pushup-best">Best: 0</div>
+          <div class="rep-controls">
+            <button class="rep-btn" onclick="changeReps('pushup',-1)">−</button>
+            <button class="rep-btn" onclick="changeReps('pushup',1)">+</button>
+            <button class="rep-btn" onclick="logReps('pushup')" style="font-size:12px;flex:2">Log set</button>
+          </div>
+        </div>
+        <div class="rep-card">
+          <div class="rc-label">Pull-ups (reps)</div>
+          <div class="rc-num" id="pullup-reps">0</div>
+          <div class="rc-best" id="pullup-best">Best: 0</div>
+          <div class="rep-controls">
+            <button class="rep-btn" onclick="changeReps('pullup',-1)">−</button>
+            <button class="rep-btn" onclick="changeReps('pullup',1)">+</button>
+            <button class="rep-btn" onclick="logReps('pullup')" style="font-size:12px;flex:2">Log set</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Progress over time</div>
+      <div id="fitness-history" style="font-size:13px;color:var(--text2);min-height:60px;"></div>
+      <div class="streak-dots" id="f-streak-dots"></div>
+    </div>
+  </div>
+
+  <!-- ========== BUSINESS PANEL ========== -->
+  <div class="panel" id="panel-business">
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px;">
+        <div class="card-title" style="margin-bottom:0">This week's tasks</div>
+        <div style="font-size:13px;color:var(--text2)" id="biz-pct-label">0 / 0 done</div>
+      </div>
+      <div class="prog-bar-wrap">
+        <div class="prog-bar"><div class="prog-fill" id="biz-prog-fill" style="width:0%;background:var(--purple)"></div></div>
+      </div>
+      <div class="week-tasks" id="week-tasks-list"></div>
+      <div class="add-task-row">
+        <input type="text" id="new-task-input" placeholder="Add a task for this week…" onkeydown="if(event.key==='Enter')addBizTask()">
+        <button class="btn btn-sm" onclick="addBizTask()">Add</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Milestone tracker</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div class="milestone" id="biz-m1" onclick="toggleBizMilestone('biz-m1')">
+          <div class="m-check"></div>
+          <div class="m-body"><div class="m-title">List skills & interests</div><div class="m-note">Write 10 things you're good at or know well</div></div>
+        </div>
+        <div class="milestone" id="biz-m2" onclick="toggleBizMilestone('biz-m2')">
+          <div class="m-check"></div>
+          <div class="m-body"><div class="m-title">Find a business idea</div><div class="m-note">Browse Fiverr, Gumroad, or Etsy in your areas of interest</div></div>
+        </div>
+        <div class="milestone" id="biz-m3" onclick="toggleBizMilestone('biz-m3')">
+          <div class="m-check"></div>
+          <div class="m-body"><div class="m-title">Validate the idea</div><div class="m-note">Talk to 3 real people who might pay for it</div></div>
+        </div>
+        <div class="milestone" id="biz-m4" onclick="toggleBizMilestone('biz-m4')">
+          <div class="m-check"></div>
+          <div class="m-body"><div class="m-title">Define your offer</div><div class="m-note">What you sell, who buys it, what you charge</div></div>
+        </div>
+        <div class="milestone" id="biz-m5" onclick="toggleBizMilestone('biz-m5')">
+          <div class="m-check"></div>
+          <div class="m-body"><div class="m-title">First sale or client</div><div class="m-note">Land the very first transaction — proof it works</div></div>
+        </div>
+        <div class="milestone" id="biz-m6" onclick="toggleBizMilestone('biz-m6')">
+          <div class="m-check"></div>
+          <div class="m-body"><div class="m-title">Reach $500/month</div><div class="m-note">Half way to your $1k goal</div></div>
+        </div>
+        <div class="milestone" id="biz-m7" onclick="toggleBizMilestone('biz-m7')">
+          <div class="m-check"></div>
+          <div class="m-body"><div class="m-title">Reach $1,000/month 🎯</div><div class="m-note">The big goal — consistent monthly revenue</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Daily check-in streak</div>
+      <div class="streak-dots" id="b-streak-dots"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h3 id="modal-title">Mark as memorized?</h3>
+    <p id="modal-body"></p>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-gold" id="modal-confirm">Yes, mark done</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ DATA ============
+const SURAHS = [
+  {n:1,ar:"الفاتحة",en:"Al-Fatihah",v:7,m:"Meccan"},
+  {n:2,ar:"البقرة",en:"Al-Baqarah",v:286,m:"Medinan"},
+  {n:3,ar:"آل عمران",en:"Ali 'Imran",v:200,m:"Medinan"},
+  {n:4,ar:"النساء",en:"An-Nisa",v:176,m:"Medinan"},
+  {n:5,ar:"المائدة",en:"Al-Ma'idah",v:120,m:"Medinan"},
+  {n:6,ar:"الأنعام",en:"Al-An'am",v:165,m:"Meccan"},
+  {n:7,ar:"الأعراف",en:"Al-A'raf",v:206,m:"Meccan"},
+  {n:8,ar:"الأنفال",en:"Al-Anfal",v:75,m:"Medinan"},
+  {n:9,ar:"التوبة",en:"At-Tawbah",v:129,m:"Medinan"},
+  {n:10,ar:"يونس",en:"Yunus",v:109,m:"Meccan"},
+  {n:11,ar:"هود",en:"Hud",v:123,m:"Meccan"},
+  {n:12,ar:"يوسف",en:"Yusuf",v:111,m:"Meccan"},
+  {n:13,ar:"الرعد",en:"Ar-Ra'd",v:43,m:"Medinan"},
+  {n:14,ar:"إبراهيم",en:"Ibrahim",v:52,m:"Meccan"},
+  {n:15,ar:"الحجر",en:"Al-Hijr",v:99,m:"Meccan"},
+  {n:16,ar:"النحل",en:"An-Nahl",v:128,m:"Meccan"},
+  {n:17,ar:"الإسراء",en:"Al-Isra",v:111,m:"Meccan"},
+  {n:18,ar:"الكهف",en:"Al-Kahf",v:110,m:"Meccan"},
+  {n:19,ar:"مريم",en:"Maryam",v:98,m:"Meccan"},
+  {n:20,ar:"طه",en:"Ta-Ha",v:135,m:"Meccan"},
+  {n:21,ar:"الأنبياء",en:"Al-Anbiya",v:112,m:"Meccan"},
+  {n:22,ar:"الحج",en:"Al-Hajj",v:78,m:"Medinan"},
+  {n:23,ar:"المؤمنون",en:"Al-Mu'minun",v:118,m:"Meccan"},
+  {n:24,ar:"النور",en:"An-Nur",v:64,m:"Medinan"},
+  {n:25,ar:"الفرقان",en:"Al-Furqan",v:77,m:"Meccan"},
+  {n:26,ar:"الشعراء",en:"Ash-Shu'ara",v:227,m:"Meccan"},
+  {n:27,ar:"النمل",en:"An-Naml",v:93,m:"Meccan"},
+  {n:28,ar:"القصص",en:"Al-Qasas",v:88,m:"Meccan"},
+  {n:29,ar:"العنكبوت",en:"Al-'Ankabut",v:69,m:"Meccan"},
+  {n:30,ar:"الروم",en:"Ar-Rum",v:60,m:"Meccan"},
+  {n:31,ar:"لقمان",en:"Luqman",v:34,m:"Meccan"},
+  {n:32,ar:"السجدة",en:"As-Sajdah",v:30,m:"Meccan"},
+  {n:33,ar:"الأحزاب",en:"Al-Ahzab",v:73,m:"Medinan"},
+  {n:34,ar:"سبأ",en:"Saba",v:54,m:"Meccan"},
+  {n:35,ar:"فاطر",en:"Fatir",v:45,m:"Meccan"},
+  {n:36,ar:"يس",en:"Ya-Sin",v:83,m:"Meccan"},
+  {n:37,ar:"الصافات",en:"As-Saffat",v:182,m:"Meccan"},
+  {n:38,ar:"ص",en:"Sad",v:88,m:"Meccan"},
+  {n:39,ar:"الزمر",en:"Az-Zumar",v:75,m:"Meccan"},
+  {n:40,ar:"غافر",en:"Ghafir",v:85,m:"Meccan"},
+  {n:41,ar:"فصلت",en:"Fussilat",v:54,m:"Meccan"},
+  {n:42,ar:"الشورى",en:"Ash-Shura",v:53,m:"Meccan"},
+  {n:43,ar:"الزخرف",en:"Az-Zukhruf",v:89,m:"Meccan"},
+  {n:44,ar:"الدخان",en:"Ad-Dukhan",v:59,m:"Meccan"},
+  {n:45,ar:"الجاثية",en:"Al-Jathiyah",v:37,m:"Meccan"},
+  {n:46,ar:"الأحقاف",en:"Al-Ahqaf",v:35,m:"Meccan"},
+  {n:47,ar:"محمد",en:"Muhammad",v:38,m:"Medinan"},
+  {n:48,ar:"الفتح",en:"Al-Fath",v:29,m:"Medinan"},
+  {n:49,ar:"الحجرات",en:"Al-Hujurat",v:18,m:"Medinan"},
+  {n:50,ar:"ق",en:"Qaf",v:45,m:"Meccan"},
+  {n:51,ar:"الذاريات",en:"Adh-Dhariyat",v:60,m:"Meccan"},
+  {n:52,ar:"الطور",en:"At-Tur",v:49,m:"Meccan"},
+  {n:53,ar:"النجم",en:"An-Najm",v:62,m:"Meccan"},
+  {n:54,ar:"القمر",en:"Al-Qamar",v:55,m:"Meccan"},
+  {n:55,ar:"الرحمن",en:"Ar-Rahman",v:78,m:"Medinan"},
+  {n:56,ar:"الواقعة",en:"Al-Waqi'ah",v:96,m:"Meccan"},
+  {n:57,ar:"الحديد",en:"Al-Hadid",v:29,m:"Medinan"},
+  {n:58,ar:"المجادلة",en:"Al-Mujadila",v:22,m:"Medinan"},
+  {n:59,ar:"الحشر",en:"Al-Hashr",v:24,m:"Medinan"},
+  {n:60,ar:"الممتحنة",en:"Al-Mumtahanah",v:13,m:"Medinan"},
+  {n:61,ar:"الصف",en:"As-Saf",v:14,m:"Medinan"},
+  {n:62,ar:"الجمعة",en:"Al-Jumu'ah",v:11,m:"Medinan"},
+  {n:63,ar:"المنافقون",en:"Al-Munafiqun",v:11,m:"Medinan"},
+  {n:64,ar:"التغابن",en:"At-Taghabun",v:18,m:"Medinan"},
+  {n:65,ar:"الطلاق",en:"At-Talaq",v:12,m:"Medinan"},
+  {n:66,ar:"التحريم",en:"At-Tahrim",v:12,m:"Medinan"},
+  {n:67,ar:"الملك",en:"Al-Mulk",v:30,m:"Meccan"},
+  {n:68,ar:"القلم",en:"Al-Qalam",v:52,m:"Meccan"},
+  {n:69,ar:"الحاقة",en:"Al-Haqqah",v:52,m:"Meccan"},
+  {n:70,ar:"المعارج",en:"Al-Ma'arij",v:44,m:"Meccan"},
+  {n:71,ar:"نوح",en:"Nuh",v:28,m:"Meccan"},
+  {n:72,ar:"الجن",en:"Al-Jinn",v:28,m:"Meccan"},
+  {n:73,ar:"المزمل",en:"Al-Muzzammil",v:20,m:"Meccan"},
+  {n:74,ar:"المدثر",en:"Al-Muddaththir",v:56,m:"Meccan"},
+  {n:75,ar:"القيامة",en:"Al-Qiyamah",v:40,m:"Meccan"},
+  {n:76,ar:"الإنسان",en:"Al-Insan",v:31,m:"Medinan"},
+  {n:77,ar:"المرسلات",en:"Al-Mursalat",v:50,m:"Meccan"},
+  {n:78,ar:"النبأ",en:"An-Naba",v:40,m:"Meccan"},
+  {n:79,ar:"النازعات",en:"An-Nazi'at",v:46,m:"Meccan"},
+  {n:80,ar:"عبس",en:"'Abasa",v:42,m:"Meccan"},
+  {n:81,ar:"التكوير",en:"At-Takwir",v:29,m:"Meccan"},
+  {n:82,ar:"الانفطار",en:"Al-Infitar",v:19,m:"Meccan"},
+  {n:83,ar:"المطففين",en:"Al-Mutaffifin",v:36,m:"Meccan"},
+  {n:84,ar:"الانشقاق",en:"Al-Inshiqaq",v:25,m:"Meccan"},
+  {n:85,ar:"البروج",en:"Al-Buruj",v:22,m:"Meccan"},
+  {n:86,ar:"الطارق",en:"At-Tariq",v:17,m:"Meccan"},
+  {n:87,ar:"الأعلى",en:"Al-A'la",v:19,m:"Meccan"},
+  {n:88,ar:"الغاشية",en:"Al-Ghashiyah",v:26,m:"Meccan"},
+  {n:89,ar:"الفجر",en:"Al-Fajr",v:30,m:"Meccan"},
+  {n:90,ar:"البلد",en:"Al-Balad",v:20,m:"Meccan"},
+  {n:91,ar:"الشمس",en:"Ash-Shams",v:15,m:"Meccan"},
+  {n:92,ar:"الليل",en:"Al-Layl",v:21,m:"Meccan"},
+  {n:93,ar:"الضحى",en:"Ad-Duhaa",v:11,m:"Meccan"},
+  {n:94,ar:"الشرح",en:"Ash-Sharh",v:8,m:"Meccan"},
+  {n:95,ar:"التين",en:"At-Tin",v:8,m:"Meccan"},
+  {n:96,ar:"العلق",en:"Al-'Alaq",v:19,m:"Meccan"},
+  {n:97,ar:"القدر",en:"Al-Qadr",v:5,m:"Meccan"},
+  {n:98,ar:"البينة",en:"Al-Bayyinah",v:8,m:"Medinan"},
+  {n:99,ar:"الزلزلة",en:"Az-Zalzalah",v:8,m:"Medinan"},
+  {n:100,ar:"العاديات",en:"Al-'Adiyat",v:11,m:"Meccan"},
+  {n:101,ar:"القارعة",en:"Al-Qari'ah",v:11,m:"Meccan"},
+  {n:102,ar:"التكاثر",en:"At-Takathur",v:8,m:"Meccan"},
+  {n:103,ar:"العصر",en:"Al-'Asr",v:3,m:"Meccan"},
+  {n:104,ar:"الهمزة",en:"Al-Humazah",v:9,m:"Meccan"},
+  {n:105,ar:"الفيل",en:"Al-Fil",v:5,m:"Meccan"},
+  {n:106,ar:"قريش",en:"Quraysh",v:4,m:"Meccan"},
+  {n:107,ar:"الماعون",en:"Al-Ma'un",v:7,m:"Meccan"},
+  {n:108,ar:"الكوثر",en:"Al-Kawthar",v:3,m:"Meccan"},
+  {n:109,ar:"الكافرون",en:"Al-Kafirun",v:6,m:"Meccan"},
+  {n:110,ar:"النصر",en:"An-Nasr",v:3,m:"Medinan"},
+  {n:111,ar:"المسد",en:"Al-Masad",v:5,m:"Meccan"},
+  {n:112,ar:"الإخلاص",en:"Al-Ikhlas",v:4,m:"Meccan"},
+  {n:113,ar:"الفلق",en:"Al-Falaq",v:5,m:"Meccan"},
+  {n:114,ar:"الناس",en:"An-Nas",v:6,m:"Meccan"}
+];
+
+const DRIVING_MILESTONES = [
+  {id:'d1',title:'Get medical certificate (Form 083-U)',note:'Visit a certified clinic for the fitness-to-drive exam',badge:'now'},
+  {id:'d2',title:'Research & choose a driving school in Tashkent',note:'Compare prices — full license costs ~8–10M UZS total',badge:'now'},
+  {id:'d3',title:'Enroll in driving school',note:'Practical lessons are still mandatory even with new 2026 rules',badge:'now'},
+  {id:'d4',title:'Study theory independently',note:'Since Feb 2026, classroom theory is optional — you can self-study',badge:'now'},
+  {id:'d5',title:'Complete all practical training sessions',note:'All practical lessons in the curriculum must be completed & logged electronically',badge:'sep'},
+  {id:'d6',title:'Register for the exam at the Unified Examination Center',note:'Register online, pick your date, bring your passport',badge:'sep'},
+  {id:'d7',title:'Pass the theory exam',note:'20 questions, 25 minutes, must score 18/20 to pass',badge:'sep'},
+  {id:'d8',title:'Pass the practical driving test',note:'Taken same day or later (1M UZS if same day)',badge:'sep'},
+  {id:'d9',title:'Pay all fees',note:'Budget 8–10 million UZS total including school + exam fees',badge:'later'},
+  {id:'d10',title:'Receive your Category B license 🎉',note:'Valid for 10 years in Uzbekistan',badge:'later'},
+];
+
+// ============ STATE ============
+function loadState() {
+  try { return JSON.parse(localStorage.getItem('dashboard_v2') || '{}'); } catch(e) { return {}; }
+}
+function saveState(s) {
+  localStorage.setItem('dashboard_v2', JSON.stringify(s));
+}
+
+let S = loadState();
+if (!S.memorized) S.memorized = [];
+if (!S.currentSurah) S.currentSurah = null;
+if (!S.quranMins) S.quranMins = 0;
+if (!S.quranStreak) S.quranStreak = [];
+if (!S.drivingDone) S.drivingDone = [];
+if (!S.drivingTarget) S.drivingTarget = '';
+if (!S.drivingMins) S.drivingMins = 0;
+if (!S.drivingStreak) S.drivingStreak = [];
+if (!S.workoutToday) S.workoutToday = {pushup:false, pullup:false, date:''};
+if (!S.pushupBest) S.pushupBest = 0;
+if (!S.pullupBest) S.pullupBest = 0;
+if (!S.fitnessHistory) S.fitnessHistory = [];
+if (!S.fitnessStreak) S.fitnessStreak = [];
+if (!S.bizTasks) S.bizTasks = [
+  {id:'bt1',text:'List 10 skills & things you know well',done:false},
+  {id:'bt2',text:'List 5 problems you personally face or see around you',done:false},
+  {id:'bt3',text:'Browse Fiverr/Gumroad for 1 hour in your interest areas',done:false},
+  {id:'bt4',text:'Research your top 2 ideas with a 30-min search each',done:false},
+  {id:'bt5',text:'Ask 3 people if they\'d pay for your top idea',done:false},
+];
+if (!S.bizMilestones) S.bizMilestones = [];
+if (!S.bizStreak) S.bizStreak = [];
+
+// Reset workout if new day
+const today = new Date().toDateString();
+if (S.workoutToday.date !== today) {
+  S.workoutToday = {pushup:false, pullup:false, date:today};
+  saveState(S);
+}
+
+let tempPushup = 0;
+let tempPullup = 0;
+
+// ============ INIT ============
+function init() {
+  setDateLine();
+  buildSurahGrid();
+  renderQuranCurrent();
+  buildMilestones();
+  renderFitness();
+  renderBiz();
+  updateOverview();
+  renderStreaks();
+  if (S.drivingTarget) {
+    document.getElementById('driving-target-date').value = S.drivingTarget;
+    updateDaysLeft();
+  }
+}
+
+function setDateLine() {
+  const d = new Date();
+  const opts = {weekday:'long', year:'numeric', month:'long', day:'numeric'};
+  document.getElementById('dateLine').textContent = d.toLocaleDateString('en-US', opts);
+}
+
+// ============ TABS ============
+function switchTab(tab) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+  document.querySelector('[data-tab="'+tab+'"]').classList.add('active');
+}
+
+// ============ QURAN ============
+function buildSurahGrid() {
+  const grid = document.getElementById('surah-grid');
+  grid.innerHTML = '';
+  SURAHS.forEach(s => {
+    const isMemorized = S.memorized.includes(s.n);
+    const isCurrent = S.currentSurah === s.n;
+    const div = document.createElement('div');
+    div.className = 'surah-item' + (isMemorized?' memorized':'') + (isCurrent?' active-surah':'');
+    div.onclick = () => selectSurah(s.n);
+    div.innerHTML = `<span class="surah-num">${s.n}</span><div class="surah-text"><div class="en">${s.en}</div><div class="ar">${s.ar}</div></div>${isMemorized?'<span class="surah-check">✓</span>':''}`;
+    grid.appendChild(div);
+  });
+}
+
+function selectSurah(n) {
+  if (S.memorized.includes(n)) return;
+  S.currentSurah = n;
+  S.quranMins = S.quranMins || 0;
+  saveState(S);
+  buildSurahGrid();
+  renderQuranCurrent();
+  updateOverview();
+}
+
+function renderQuranCurrent() {
+  const arabic = document.getElementById('q-arabic');
+  const nameEn = document.getElementById('q-name-en');
+  const meta = document.getElementById('q-meta');
+  const actions = document.getElementById('q-actions');
+
+  if (!S.currentSurah) {
+    arabic.textContent = '—';
+    nameEn.textContent = 'No surah selected';
+    meta.textContent = 'Pick a surah from the list below to begin';
+    actions.innerHTML = '';
+    return;
+  }
+
+  const s = SURAHS.find(x => x.n === S.currentSurah);
+  arabic.textContent = s.ar;
+  nameEn.textContent = `${s.n}. ${s.en}`;
+  meta.textContent = `${s.v} verses · ${s.m}`;
+
+  actions.innerHTML = `
+    <button class="btn btn-gold" onclick="openMarkMemorized()">✓ Mark as memorized</button>
+    <button class="btn btn-sm" onclick="selectSurah(null)">Change surah</button>
+  `;
+
+  document.getElementById('q-total-mins').textContent = S.quranMins || 0;
+}
+
+function logQuranSession() {
+  const mins = parseInt(document.getElementById('q-minutes').value) || 0;
+  if (mins <= 0) return;
+  S.quranMins = (S.quranMins || 0) + mins;
+  const t = new Date().toDateString();
+  if (!S.quranStreak.includes(t)) S.quranStreak.push(t);
+  document.getElementById('q-minutes').value = '';
+  saveState(S);
+  renderQuranCurrent();
+  renderStreaks();
+  updateOverview();
+  markDailyBiz();
+}
+
+function openMarkMemorized() {
+  if (!S.currentSurah) return;
+  const s = SURAHS.find(x => x.n === S.currentSurah);
+  document.getElementById('modal-title').textContent = `Mark "${s.en}" as memorized?`;
+  document.getElementById('modal-body').textContent = `You've confirmed you can recite Surah ${s.en} (${s.ar}) from memory without looking. This will be recorded and you can move to your next surah.`;
+  document.getElementById('modal-confirm').onclick = confirmMemorized;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function confirmMemorized() {
+  if (!S.memorized.includes(S.currentSurah)) S.memorized.push(S.currentSurah);
+  S.currentSurah = null;
+  S.quranMins = 0;
+  closeModal();
+  saveState(S);
+  buildSurahGrid();
+  renderQuranCurrent();
+  updateOverview();
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+// ============ DRIVING ============
+function buildMilestones() {
+  const list = document.getElementById('milestone-list');
+  list.innerHTML = '';
+  DRIVING_MILESTONES.forEach(m => {
+    const done = S.drivingDone.includes(m.id);
+    const div = document.createElement('div');
+    div.className = 'milestone' + (done?' done-m':'');
+    div.id = 'ms-'+m.id;
+    div.onclick = () => toggleMilestone(m.id);
+    const badgeClass = m.badge==='now'?'badge-now':m.badge==='sep'?'badge-sep':'badge-later';
+    const badgeText = m.badge==='now'?'Do now':m.badge==='sep'?'By Sep':'Later';
+    div.innerHTML = `<div class="m-check"></div><div class="m-body"><div class="m-title">${m.title}</div><div class="m-note">${m.note}</div></div><span class="m-badge ${badgeClass}">${badgeText}</span>`;
+    list.appendChild(div);
+  });
+  updateDrivingProgress();
+}
+
+function toggleMilestone(id) {
+  const idx = S.drivingDone.indexOf(id);
+  if (idx >= 0) S.drivingDone.splice(idx,1);
+  else S.drivingDone.push(id);
+  saveState(S);
+  buildMilestones();
+  updateOverview();
+}
+
+function updateDrivingProgress() {
+  const pct = Math.round((S.drivingDone.length / DRIVING_MILESTONES.length) * 100);
+  document.getElementById('driving-prog-fill').style.width = pct + '%';
+  document.getElementById('driving-pct-label').textContent = `${S.drivingDone.length} / ${DRIVING_MILESTONES.length} done`;
+}
+
+function logDrivingSession() {
+  const mins = parseInt(document.getElementById('d-minutes').value) || 0;
+  if (mins <= 0) return;
+  S.drivingMins = (S.drivingMins || 0) + mins;
+  const t = new Date().toDateString();
+  if (!S.drivingStreak.includes(t)) S.drivingStreak.push(t);
+  document.getElementById('d-minutes').value = '';
+  document.getElementById('d-total-mins').textContent = S.drivingMins;
+  saveState(S);
+  renderStreaks();
+  updateOverview();
+}
+
+document.getElementById('driving-target-date').addEventListener('change', function() {
+  S.drivingTarget = this.value;
+  saveState(S);
+  updateDaysLeft();
+});
+
+function updateDaysLeft() {
+  const el = document.getElementById('driving-days-left');
+  if (!S.drivingTarget) { el.textContent=''; return; }
+  const diff = Math.ceil((new Date(S.drivingTarget) - new Date()) / 86400000);
+  el.textContent = diff > 0 ? `${diff} days to go` : diff === 0 ? 'Today!' : 'Date passed';
+}
+
+// ============ FITNESS ============
+function toggleWorkout(type) {
+  const btn = document.getElementById('workout-btn-'+type);
+  const label = document.getElementById('wc-'+type+'-label');
+  S.workoutToday[type] = !S.workoutToday[type];
+  S.workoutToday.date = today;
+  if (S.workoutToday[type]) {
+    btn.classList.add('checked');
+    label.textContent = 'Done today ✓';
+    const t = new Date().toDateString();
+    if (!S.fitnessStreak.includes(t)) S.fitnessStreak.push(t);
+  } else {
+    btn.classList.remove('checked');
+    label.textContent = 'Not done today';
+  }
+  saveState(S);
+  renderStreaks();
+  updateOverview();
+}
+
+function changeReps(type, delta) {
+  if (type === 'pushup') {
+    tempPushup = Math.max(0, tempPushup + delta);
+    document.getElementById('pushup-reps').textContent = tempPushup;
+  } else {
+    tempPullup = Math.max(0, tempPullup + delta);
+    document.getElementById('pullup-reps').textContent = tempPullup;
+  }
+}
+
+function logReps(type) {
+  const val = type === 'pushup' ? tempPushup : tempPullup;
+  if (val === 0) return;
+  const dateStr = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  S.fitnessHistory = S.fitnessHistory || [];
+  S.fitnessHistory.push({type, val, date:dateStr});
+  if (S.fitnessHistory.length > 30) S.fitnessHistory = S.fitnessHistory.slice(-30);
+  if (type === 'pushup') {
+    S.pushupBest = Math.max(S.pushupBest||0, val);
+    tempPushup = 0;
+    document.getElementById('pushup-reps').textContent = 0;
+    document.getElementById('pushup-best').textContent = 'Best: ' + S.pushupBest;
+  } else {
+    S.pullupBest = Math.max(S.pullupBest||0, val);
+    tempPullup = 0;
+    document.getElementById('pullup-reps').textContent = 0;
+    document.getElementById('pullup-best').textContent = 'Best: ' + S.pullupBest;
+  }
+  saveState(S);
+  renderFitnessHistory();
+  updateOverview();
+}
+
+function renderFitness() {
+  if (S.workoutToday.date === today) {
+    if (S.workoutToday.pushup) {
+      document.getElementById('workout-btn-pushup').classList.add('checked');
+      document.getElementById('wc-pushup-label').textContent = 'Done today ✓';
+    }
+    if (S.workoutToday.pullup) {
+      document.getElementById('workout-btn-pullup').classList.add('checked');
+      document.getElementById('wc-pullup-label').textContent = 'Done today ✓';
+    }
+  }
+  document.getElementById('pushup-best').textContent = 'Best: '+(S.pushupBest||0);
+  document.getElementById('pullup-best').textContent = 'Best: '+(S.pullupBest||0);
+  renderFitnessHistory();
+}
+
+function renderFitnessHistory() {
+  const el = document.getElementById('fitness-history');
+  if (!S.fitnessHistory || S.fitnessHistory.length === 0) {
+    el.innerHTML = '<span style="color:var(--text3);font-size:13px;">No reps logged yet — log your first set above.</span>';
+    return;
+  }
+  const last8 = S.fitnessHistory.slice(-8);
+  el.innerHTML = last8.map(h =>
+    `<span style="display:inline-block;margin:3px 6px 3px 0;padding:4px 10px;border-radius:99px;background:var(--surface3);font-size:12px;color:var(--text2);">${h.date} · ${h.type==='pushup'?'Push-up':'Pull-up'}: <strong style="color:var(--text)">${h.val}</strong></span>`
+  ).join('');
+}
+
+// ============ BUSINESS ============
+function renderBiz() {
+  const list = document.getElementById('week-tasks-list');
+  list.innerHTML = '';
+  S.bizTasks.forEach(t => {
+    const div = document.createElement('div');
+    div.className = 'week-task'+(t.done?' task-done':'');
+    div.onclick = () => toggleBizTask(t.id);
+    div.innerHTML = `<div class="wt-box"></div><div class="wt-body"><div class="wt-text">${t.text}</div></div>`;
+    list.appendChild(div);
+  });
+  updateBizProgress();
+
+  // milestones
+  ['biz-m1','biz-m2','biz-m3','biz-m4','biz-m5','biz-m6','biz-m7'].forEach(id => {
+    if (S.bizMilestones.includes(id)) document.getElementById(id)?.classList.add('done-m');
+  });
+}
+
+function toggleBizTask(id) {
+  const t = S.bizTasks.find(x => x.id===id);
+  if (t) t.done = !t.done;
+  const t2 = new Date().toDateString();
+  if (!S.bizStreak.includes(t2)) S.bizStreak.push(t2);
+  saveState(S);
+  renderBiz();
+  updateOverview();
+  renderStreaks();
+}
+
+function addBizTask() {
+  const input = document.getElementById('new-task-input');
+  const text = input.value.trim();
+  if (!text) return;
+  S.bizTasks.push({id:'bt'+Date.now(), text, done:false});
+  input.value = '';
+  saveState(S);
+  renderBiz();
+  updateOverview();
+}
+
+function toggleBizMilestone(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const idx = S.bizMilestones.indexOf(id);
+  if (idx >= 0) {
+    S.bizMilestones.splice(idx,1);
+    el.classList.remove('done-m');
+  } else {
+    S.bizMilestones.push(id);
+    el.classList.add('done-m');
+  }
+  saveState(S);
+}
+
+function updateBizProgress() {
+  const done = S.bizTasks.filter(t => t.done).length;
+  const total = S.bizTasks.length;
+  const pct = total ? Math.round((done/total)*100) : 0;
+  document.getElementById('biz-prog-fill').style.width = pct+'%';
+  document.getElementById('biz-pct-label').textContent = `${done} / ${total} done`;
+}
+
+function markDailyBiz() {
+  const t2 = new Date().toDateString();
+  if (!S.bizStreak.includes(t2)) { S.bizStreak.push(t2); saveState(S); renderStreaks(); }
+}
+
+// ============ OVERVIEW ============
+function updateOverview() {
+  document.getElementById('ov-quran').textContent = S.memorized.length;
+  const dPct = Math.round((S.drivingDone.length / DRIVING_MILESTONES.length)*100);
+  document.getElementById('ov-driving').textContent = dPct+'%';
+  const wCount = S.fitnessStreak ? S.fitnessStreak.length : 0;
+  document.getElementById('ov-fitness').textContent = wCount;
+  const bDone = S.bizTasks.filter(t=>t.done).length;
+  const bTotal = S.bizTasks.length;
+  document.getElementById('ov-business').textContent = bTotal ? Math.round((bDone/bTotal)*100)+'%' : '0%';
+}
+
+// ============ STREAKS ============
+function renderStreaks() {
+  renderStreakDots('q-streak-dots', S.quranStreak, 'done-q', 14);
+  renderStreakDots('d-streak-dots', S.drivingStreak, 'done-d', 14);
+  renderStreakDots('f-streak-dots', S.fitnessStreak, 'done-f', 14);
+  renderStreakDots('b-streak-dots', S.bizStreak, 'done-b', 14);
+  renderOvStreaks('ov-quran-streak', S.quranStreak, 'done-q', 7);
+  renderOvStreaks('ov-driving-streak', S.drivingStreak, 'done-d', 7);
+  renderOvStreaks('ov-fitness-streak', S.fitnessStreak, 'done-f', 7);
+  renderOvStreaks('ov-business-streak', S.bizStreak, 'done-b', 7);
+}
+
+function renderStreakDots(elId, streak, cls, days) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.innerHTML = '';
+  for (let i = days-1; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const ds = d.toDateString();
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (streak && streak.includes(ds) ? ' '+cls : '');
+    dot.title = ds;
+    el.appendChild(dot);
+  }
+}
+
+function renderOvStreaks(elId, streak, cls, days) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.innerHTML = '';
+  for (let i = days-1; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const ds = d.toDateString();
+    const dot = document.createElement('div');
+    dot.className = 'ov-dot';
+    if (streak && streak.includes(ds)) dot.style.background = getComputedStyle(document.documentElement).getPropertyValue('--'+cls.replace('done-','').replace('q','gold').replace('d','teal').replace('f','blue').replace('b','purple')) || '#ccc';
+    el.appendChild(dot);
+  }
+}
+
+// fix ov streak colors
+const streakColors = {q:'var(--gold)',d:'var(--teal)',f:'var(--blue)',b:'var(--purple)'};
+function renderOvStreaks2(elId, streak, key, days) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.innerHTML = '';
+  for (let i = days-1; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const ds = d.toDateString();
+    const dot = document.createElement('div');
+    dot.className = 'ov-dot';
+    if (streak && streak.includes(ds)) dot.style.background = streakColors[key];
+    el.appendChild(dot);
+  }
+}
+
+function renderStreaks() {
+  renderStreakDots('q-streak-dots', S.quranStreak, 'done-q', 14);
+  renderStreakDots('d-streak-dots', S.drivingStreak, 'done-d', 14);
+  renderStreakDots('f-streak-dots', S.fitnessStreak, 'done-f', 14);
+  renderStreakDots('b-streak-dots', S.bizStreak, 'done-b', 14);
+  renderOvStreaks2('ov-quran-streak', S.quranStreak, 'q', 7);
+  renderOvStreaks2('ov-driving-streak', S.drivingStreak, 'd', 7);
+  renderOvStreaks2('ov-fitness-streak', S.fitnessStreak, 'f', 7);
+  renderOvStreaks2('ov-business-streak', S.bizStreak, 'b', 7);
+}
+
+// close modal on overlay click
+document.getElementById('modal-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+init();
+</script>
+</body>
+</html>
