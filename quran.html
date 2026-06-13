@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quran — Dashboard</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+  /* Quran-specific styles only */
+  .quran-current {
+    background: var(--gold-dim);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+  .surah-arabic {
+    font-family: 'Amiri', serif; font-size: 36px;
+    color: var(--gold); direction: rtl; line-height: 1.4; margin-bottom: 6px;
+  }
+  .surah-name-en { font-size: 20px; font-weight: 500; margin-bottom: 4px; }
+  .surah-meta    { font-size: 13px; color: var(--text2); }
+  .surah-actions { display: flex; gap: 8px; justify-content: center; margin-top: 1.25rem; flex-wrap: wrap; }
+
+  .surah-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 6px; max-height: 420px; overflow-y: auto; padding-right: 4px;
+  }
+  .surah-item {
+    padding: 10px 12px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); background: var(--surface2);
+    cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .surah-item:hover              { border-color: var(--gold); background: var(--gold-dim); }
+  .surah-item.is-memorized       { border-color: rgba(201,168,76,0.25); background: var(--gold-dim); opacity: 0.55; cursor: default; }
+  .surah-item.is-current         { border-color: var(--gold); background: var(--gold-dim); }
+  .surah-item.is-memorized .s-en { text-decoration: line-through; color: var(--text3); }
+  .s-num  { font-size: 11px; color: var(--text3); min-width: 26px; }
+  .s-en   { font-size: 13px; font-weight: 500; color: var(--text); }
+  .s-ar   { font-family: 'Amiri', serif; font-size: 14px; color: var(--gold); direction: rtl; }
+  .s-tick { margin-left: auto; color: var(--gold); }
+
+  .session-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+  .session-row label { font-size: 13px; color: var(--text2); }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <a href="index.html" class="back-link">← Dashboard</a>
+
+  <div class="header">
+    <div class="date-line" id="dateLine"></div>
+    <h1>🕌 <span class="accent-gold">Quran</span> Memorization</h1>
+  </div>
+
+  <!-- CURRENT SURAH -->
+  <div class="quran-current" id="current-card">
+    <div class="surah-arabic" id="q-arabic">—</div>
+    <div class="surah-name-en" id="q-name-en">No surah selected</div>
+    <div class="surah-meta" id="q-meta">Pick a surah from the list below to begin</div>
+    <div class="surah-actions" id="q-actions"></div>
+  </div>
+
+  <!-- SESSION LOG -->
+  <div class="card">
+    <div class="card-title">Today's session</div>
+    <div class="session-row">
+      <label>Minutes studied:</label>
+      <input type="number" class="input" id="q-mins-input" min="0" max="300" placeholder="0" style="width:90px">
+      <button class="btn btn-sm btn-gold" onclick="logSession()">Log</button>
+    </div>
+    <div style="font-size:13px;color:var(--text2)">
+      Total minutes on this surah: <strong id="q-total-mins">0</strong>
+    </div>
+    <div style="font-size:12px;color:var(--text3);margin-top:4px">Last 14 days</div>
+    <div class="streak-dots" id="q-streak-dots"></div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="card">
+    <div class="card-title">Overall progress</div>
+    <div class="prog-bar-wrap">
+      <div class="prog-meta">
+        <span id="prog-label">0 / 114 surahs</span>
+        <span id="prog-pct">0%</span>
+      </div>
+      <div class="prog-bar"><div class="prog-fill gold" id="prog-fill" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- SURAH LIST -->
+  <div class="card">
+    <div class="card-title">All 114 surahs — tap to select your current focus</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:10px;">
+      Gold checkmark = memorized ✓ &nbsp;·&nbsp; Highlighted = current focus
+    </div>
+    <div class="surah-grid" id="surah-grid"></div>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h3 id="modal-title">Mark as memorized?</h3>
+    <p id="modal-body"></p>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-gold" id="modal-confirm">Yes, mark done ✓</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── SURAH DATA ────────────────────────────────────────────────────────────────
+const SURAHS = [
+  {n:1,ar:"الفاتحة",en:"Al-Fatihah",v:7,m:"Meccan"},
+  {n:2,ar:"البقرة",en:"Al-Baqarah",v:286,m:"Medinan"},
+  {n:3,ar:"آل عمران",en:"Ali 'Imran",v:200,m:"Medinan"},
+  {n:4,ar:"النساء",en:"An-Nisa",v:176,m:"Medinan"},
+  {n:5,ar:"المائدة",en:"Al-Ma'idah",v:120,m:"Medinan"},
+  {n:6,ar:"الأنعام",en:"Al-An'am",v:165,m:"Meccan"},
+  {n:7,ar:"الأعراف",en:"Al-A'raf",v:206,m:"Meccan"},
+  {n:8,ar:"الأنفال",en:"Al-Anfal",v:75,m:"Medinan"},
+  {n:9,ar:"التوبة",en:"At-Tawbah",v:129,m:"Medinan"},
+  {n:10,ar:"يونس",en:"Yunus",v:109,m:"Meccan"},
+  {n:11,ar:"هود",en:"Hud",v:123,m:"Meccan"},
+  {n:12,ar:"يوسف",en:"Yusuf",v:111,m:"Meccan"},
+  {n:13,ar:"الرعد",en:"Ar-Ra'd",v:43,m:"Medinan"},
+  {n:14,ar:"إبراهيم",en:"Ibrahim",v:52,m:"Meccan"},
+  {n:15,ar:"الحجر",en:"Al-Hijr",v:99,m:"Meccan"},
+  {n:16,ar:"النحل",en:"An-Nahl",v:128,m:"Meccan"},
+  {n:17,ar:"الإسراء",en:"Al-Isra",v:111,m:"Meccan"},
+  {n:18,ar:"الكهف",en:"Al-Kahf",v:110,m:"Meccan"},
+  {n:19,ar:"مريم",en:"Maryam",v:98,m:"Meccan"},
+  {n:20,ar:"طه",en:"Ta-Ha",v:135,m:"Meccan"},
+  {n:21,ar:"الأنبياء",en:"Al-Anbiya",v:112,m:"Meccan"},
+  {n:22,ar:"الحج",en:"Al-Hajj",v:78,m:"Medinan"},
+  {n:23,ar:"المؤمنون",en:"Al-Mu'minun",v:118,m:"Meccan"},
+  {n:24,ar:"النور",en:"An-Nur",v:64,m:"Medinan"},
+  {n:25,ar:"الفرقان",en:"Al-Furqan",v:77,m:"Meccan"},
+  {n:26,ar:"الشعراء",en:"Ash-Shu'ara",v:227,m:"Meccan"},
+  {n:27,ar:"النمل",en:"An-Naml",v:93,m:"Meccan"},
+  {n:28,ar:"القصص",en:"Al-Qasas",v:88,m:"Meccan"},
+  {n:29,ar:"العنكبوت",en:"Al-'Ankabut",v:69,m:"Meccan"},
+  {n:30,ar:"الروم",en:"Ar-Rum",v:60,m:"Meccan"},
+  {n:31,ar:"لقمان",en:"Luqman",v:34,m:"Meccan"},
+  {n:32,ar:"السجدة",en:"As-Sajdah",v:30,m:"Meccan"},
+  {n:33,ar:"الأحزاب",en:"Al-Ahzab",v:73,m:"Medinan"},
+  {n:34,ar:"سبأ",en:"Saba",v:54,m:"Meccan"},
+  {n:35,ar:"فاطر",en:"Fatir",v:45,m:"Meccan"},
+  {n:36,ar:"يس",en:"Ya-Sin",v:83,m:"Meccan"},
+  {n:37,ar:"الصافات",en:"As-Saffat",v:182,m:"Meccan"},
+  {n:38,ar:"ص",en:"Sad",v:88,m:"Meccan"},
+  {n:39,ar:"الزمر",en:"Az-Zumar",v:75,m:"Meccan"},
+  {n:40,ar:"غافر",en:"Ghafir",v:85,m:"Meccan"},
+  {n:41,ar:"فصلت",en:"Fussilat",v:54,m:"Meccan"},
+  {n:42,ar:"الشورى",en:"Ash-Shura",v:53,m:"Meccan"},
+  {n:43,ar:"الزخرف",en:"Az-Zukhruf",v:89,m:"Meccan"},
+  {n:44,ar:"الدخان",en:"Ad-Dukhan",v:59,m:"Meccan"},
+  {n:45,ar:"الجاثية",en:"Al-Jathiyah",v:37,m:"Meccan"},
+  {n:46,ar:"الأحقاف",en:"Al-Ahqaf",v:35,m:"Meccan"},
+  {n:47,ar:"محمد",en:"Muhammad",v:38,m:"Medinan"},
+  {n:48,ar:"الفتح",en:"Al-Fath",v:29,m:"Medinan"},
+  {n:49,ar:"الحجرات",en:"Al-Hujurat",v:18,m:"Medinan"},
+  {n:50,ar:"ق",en:"Qaf",v:45,m:"Meccan"},
+  {n:51,ar:"الذاريات",en:"Adh-Dhariyat",v:60,m:"Meccan"},
+  {n:52,ar:"الطور",en:"At-Tur",v:49,m:"Meccan"},
+  {n:53,ar:"النجم",en:"An-Najm",v:62,m:"Meccan"},
+  {n:54,ar:"القمر",en:"Al-Qamar",v:55,m:"Meccan"},
+  {n:55,ar:"الرحمن",en:"Ar-Rahman",v:78,m:"Medinan"},
+  {n:56,ar:"الواقعة",en:"Al-Waqi'ah",v:96,m:"Meccan"},
+  {n:57,ar:"الحديد",en:"Al-Hadid",v:29,m:"Medinan"},
+  {n:58,ar:"المجادلة",en:"Al-Mujadila",v:22,m:"Medinan"},
+  {n:59,ar:"الحشر",en:"Al-Hashr",v:24,m:"Medinan"},
+  {n:60,ar:"الممتحنة",en:"Al-Mumtahanah",v:13,m:"Medinan"},
+  {n:61,ar:"الصف",en:"As-Saf",v:14,m:"Medinan"},
+  {n:62,ar:"الجمعة",en:"Al-Jumu'ah",v:11,m:"Medinan"},
+  {n:63,ar:"المنافقون",en:"Al-Munafiqun",v:11,m:"Medinan"},
+  {n:64,ar:"التغابن",en:"At-Taghabun",v:18,m:"Medinan"},
+  {n:65,ar:"الطلاق",en:"At-Talaq",v:12,m:"Medinan"},
+  {n:66,ar:"التحريم",en:"At-Tahrim",v:12,m:"Medinan"},
+  {n:67,ar:"الملك",en:"Al-Mulk",v:30,m:"Meccan"},
+  {n:68,ar:"القلم",en:"Al-Qalam",v:52,m:"Meccan"},
+  {n:69,ar:"الحاقة",en:"Al-Haqqah",v:52,m:"Meccan"},
+  {n:70,ar:"المعارج",en:"Al-Ma'arij",v:44,m:"Meccan"},
+  {n:71,ar:"نوح",en:"Nuh",v:28,m:"Meccan"},
+  {n:72,ar:"الجن",en:"Al-Jinn",v:28,m:"Meccan"},
+  {n:73,ar:"المزمل",en:"Al-Muzzammil",v:20,m:"Meccan"},
+  {n:74,ar:"المدثر",en:"Al-Muddaththir",v:56,m:"Meccan"},
+  {n:75,ar:"القيامة",en:"Al-Qiyamah",v:40,m:"Meccan"},
+  {n:76,ar:"الإنسان",en:"Al-Insan",v:31,m:"Medinan"},
+  {n:77,ar:"المرسلات",en:"Al-Mursalat",v:50,m:"Meccan"},
+  {n:78,ar:"النبأ",en:"An-Naba",v:40,m:"Meccan"},
+  {n:79,ar:"النازعات",en:"An-Nazi'at",v:46,m:"Meccan"},
+  {n:80,ar:"عبس",en:"'Abasa",v:42,m:"Meccan"},
+  {n:81,ar:"التكوير",en:"At-Takwir",v:29,m:"Meccan"},
+  {n:82,ar:"الانفطار",en:"Al-Infitar",v:19,m:"Meccan"},
+  {n:83,ar:"المطففين",en:"Al-Mutaffifin",v:36,m:"Meccan"},
+  {n:84,ar:"الانشقاق",en:"Al-Inshiqaq",v:25,m:"Meccan"},
+  {n:85,ar:"البروج",en:"Al-Buruj",v:22,m:"Meccan"},
+  {n:86,ar:"الطارق",en:"At-Tariq",v:17,m:"Meccan"},
+  {n:87,ar:"الأعلى",en:"Al-A'la",v:19,m:"Meccan"},
+  {n:88,ar:"الغاشية",en:"Al-Ghashiyah",v:26,m:"Meccan"},
+  {n:89,ar:"الفجر",en:"Al-Fajr",v:30,m:"Meccan"},
+  {n:90,ar:"البلد",en:"Al-Balad",v:20,m:"Meccan"},
+  {n:91,ar:"الشمس",en:"Ash-Shams",v:15,m:"Meccan"},
+  {n:92,ar:"الليل",en:"Al-Layl",v:21,m:"Meccan"},
+  {n:93,ar:"الضحى",en:"Ad-Duhaa",v:11,m:"Meccan"},
+  {n:94,ar:"الشرح",en:"Ash-Sharh",v:8,m:"Meccan"},
+  {n:95,ar:"التين",en:"At-Tin",v:8,m:"Meccan"},
+  {n:96,ar:"العلق",en:"Al-'Alaq",v:19,m:"Meccan"},
+  {n:97,ar:"القدر",en:"Al-Qadr",v:5,m:"Meccan"},
+  {n:98,ar:"البينة",en:"Al-Bayyinah",v:8,m:"Medinan"},
+  {n:99,ar:"الزلزلة",en:"Az-Zalzalah",v:8,m:"Medinan"},
+  {n:100,ar:"العاديات",en:"Al-'Adiyat",v:11,m:"Meccan"},
+  {n:101,ar:"القارعة",en:"Al-Qari'ah",v:11,m:"Meccan"},
+  {n:102,ar:"التكاثر",en:"At-Takathur",v:8,m:"Meccan"},
+  {n:103,ar:"العصر",en:"Al-'Asr",v:3,m:"Meccan"},
+  {n:104,ar:"الهمزة",en:"Al-Humazah",v:9,m:"Meccan"},
+  {n:105,ar:"الفيل",en:"Al-Fil",v:5,m:"Meccan"},
+  {n:106,ar:"قريش",en:"Quraysh",v:4,m:"Meccan"},
+  {n:107,ar:"الماعون",en:"Al-Ma'un",v:7,m:"Meccan"},
+  {n:108,ar:"الكوثر",en:"Al-Kawthar",v:3,m:"Meccan"},
+  {n:109,ar:"الكافرون",en:"Al-Kafirun",v:6,m:"Meccan"},
+  {n:110,ar:"النصر",en:"An-Nasr",v:3,m:"Medinan"},
+  {n:111,ar:"المسد",en:"Al-Masad",v:5,m:"Meccan"},
+  {n:112,ar:"الإخلاص",en:"Al-Ikhlas",v:4,m:"Meccan"},
+  {n:113,ar:"الفلق",en:"Al-Falaq",v:5,m:"Meccan"},
+  {n:114,ar:"الناس",en:"An-Nas",v:6,m:"Meccan"}
+];
+
+// ── STORAGE KEYS (from contract) ─────────────────────────────────────────────
+const K = {
+  memorized:   'q_memorized',
+  current:     'q_current',
+  minsCurrent: 'q_mins_current',
+  streak:      'q_streak',
+};
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+function load(key, fb) { try { const v = localStorage.getItem(key); return v!==null?JSON.parse(v):fb; } catch(e){return fb;} }
+function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+
+let memorized   = load(K.memorized, []);
+let current     = load(K.current, null);
+let minsCurrent = load(K.minsCurrent, 0);
+let streak      = load(K.streak, []);
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+document.getElementById('dateLine').textContent =
+  new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+buildGrid();
+renderCurrent();
+renderProgress();
+renderStreakDots();
+
+// ── SURAH GRID ────────────────────────────────────────────────────────────────
+function buildGrid() {
+  const grid = document.getElementById('surah-grid');
+  grid.innerHTML = '';
+  SURAHS.forEach(s => {
+    const isMem = memorized.includes(s.n);
+    const isCur = current === s.n;
+    const el = document.createElement('div');
+    el.className = 'surah-item' + (isMem?' is-memorized':'') + (isCur?' is-current':'');
+    el.onclick = () => { if (!isMem) selectSurah(s.n); };
+    el.innerHTML = `
+      <span class="s-num">${s.n}</span>
+      <div style="flex:1">
+        <div class="s-en">${s.en}</div>
+        <div class="s-ar">${s.ar}</div>
+      </div>
+      ${isMem ? '<span class="s-tick">✓</span>' : ''}
+    `;
+    grid.appendChild(el);
+  });
+}
+
+function selectSurah(n) {
+  current = n;
+  save(K.current, current);
+  buildGrid();
+  renderCurrent();
+}
+
+// ── CURRENT CARD ──────────────────────────────────────────────────────────────
+function renderCurrent() {
+  document.getElementById('q-total-mins').textContent = minsCurrent;
+  if (!current) {
+    document.getElementById('q-arabic').textContent   = '—';
+    document.getElementById('q-name-en').textContent  = 'No surah selected';
+    document.getElementById('q-meta').textContent     = 'Pick a surah from the list below to begin';
+    document.getElementById('q-actions').innerHTML    = '';
+    return;
+  }
+  const s = SURAHS.find(x => x.n === current);
+  document.getElementById('q-arabic').textContent  = s.ar;
+  document.getElementById('q-name-en').textContent = `${s.n}. ${s.en}`;
+  document.getElementById('q-meta').textContent    = `${s.v} verses · ${s.m}`;
+  document.getElementById('q-actions').innerHTML   = `
+    <button class="btn btn-gold" onclick="openModal()">✓ Mark as memorized</button>
+    <button class="btn btn-sm" onclick="clearCurrent()">Change surah</button>
+  `;
+}
+
+function clearCurrent() {
+  current = null;
+  save(K.current, null);
+  buildGrid();
+  renderCurrent();
+}
+
+// ── SESSION LOG ───────────────────────────────────────────────────────────────
+function logSession() {
+  const mins = parseInt(document.getElementById('q-mins-input').value) || 0;
+  if (mins <= 0) return;
+  minsCurrent += mins;
+  save(K.minsCurrent, minsCurrent);
+  const today = new Date().toDateString();
+  if (!streak.includes(today)) { streak.push(today); save(K.streak, streak); }
+  document.getElementById('q-mins-input').value = '';
+  renderCurrent();
+  renderStreakDots();
+}
+
+// ── PROGRESS ──────────────────────────────────────────────────────────────────
+function renderProgress() {
+  const pct = Math.round((memorized.length / 114) * 100);
+  document.getElementById('prog-fill').style.width  = pct + '%';
+  document.getElementById('prog-pct').textContent   = pct + '%';
+  document.getElementById('prog-label').textContent = `${memorized.length} / 114 surahs`;
+}
+
+// ── STREAK DOTS ───────────────────────────────────────────────────────────────
+function renderStreakDots() {
+  const el = document.getElementById('q-streak-dots');
+  el.innerHTML = '';
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (streak.includes(d.toDateString()) ? ' gold' : '');
+    dot.title = d.toDateString();
+    el.appendChild(dot);
+  }
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+function openModal() {
+  if (!current) return;
+  const s = SURAHS.find(x => x.n === current);
+  document.getElementById('modal-title').textContent = `Mark "${s.en}" as memorized?`;
+  document.getElementById('modal-body').textContent  =
+    `You've confirmed you can recite Surah ${s.n} — ${s.en} (${s.ar}) from memory without looking. This surah will be recorded as done and you can choose your next one.`;
+  document.getElementById('modal-confirm').onclick = confirmMemorized;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function confirmMemorized() {
+  if (!memorized.includes(current)) { memorized.push(current); save(K.memorized, memorized); }
+  current = null; save(K.current, null);
+  minsCurrent = 0; save(K.minsCurrent, 0);
+  closeModal();
+  buildGrid();
+  renderCurrent();
+  renderProgress();
+}
+
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+document.getElementById('modal-overlay').addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(); });
+</script>
+</body>
+</html>
