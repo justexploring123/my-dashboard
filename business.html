@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Business — Dashboard</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+  .phase-label {
+    font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase;
+    color: var(--text3); margin: 1.25rem 0 0.5rem; font-weight: 500;
+  }
+  .phase-label:first-child { margin-top: 0; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <a href="index.html" class="back-link">← Dashboard</a>
+
+  <div class="header">
+    <div class="date-line" id="dateLine"></div>
+    <h1>💼 <span class="accent-purple">Side Business</span></h1>
+  </div>
+
+  <!-- GOAL BANNER -->
+  <div class="card" style="background:var(--purple-dim);border-color:rgba(155,127,244,0.2);">
+    <div style="font-size:13px;color:var(--text2);margin-bottom:4px;">The goal</div>
+    <div style="font-size:20px;font-weight:400;color:var(--purple)">$1,000 / month in consistent revenue</div>
+    <div style="font-size:12px;color:var(--text3);margin-top:4px;">Currently: idea-finding phase (Month 1)</div>
+  </div>
+
+  <!-- MILESTONES -->
+  <div class="card">
+    <div class="card-title">Milestones</div>
+    <div id="b-milestone-list"></div>
+  </div>
+
+  <!-- WEEKLY TASKS -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px;">
+      <div class="card-title" style="margin-bottom:0">This week's tasks</div>
+      <span style="font-size:13px;color:var(--text2)" id="b-pct-label">0 / 0 done</span>
+    </div>
+    <div class="prog-bar-wrap">
+      <div class="prog-bar"><div class="prog-fill purple" id="b-prog-fill" style="width:0%"></div></div>
+    </div>
+    <div id="b-tasks-list"></div>
+    <div class="input-row" style="margin-top:10px;">
+      <input type="text" class="input" id="b-new-task" placeholder="Add a task for this week…" onkeydown="if(event.key==='Enter')addTask()">
+      <button class="btn btn-sm btn-purple" onclick="addTask()">Add</button>
+    </div>
+  </div>
+
+  <!-- STREAK -->
+  <div class="card">
+    <div class="card-title">Activity streak — last 14 days</div>
+    <div class="streak-dots" id="b-streak-dots"></div>
+  </div>
+
+</div>
+
+<script>
+// ── MILESTONE DATA ────────────────────────────────────────────────────────────
+const MILESTONES = [
+  {id:'bm1', title:'List your skills & interests',       note:'Write 10 things you\'re good at or know more about than most people'},
+  {id:'bm2', title:'Identify problems you can solve',    note:'List 5 real problems you face or see around you every day'},
+  {id:'bm3', title:'Research what people already pay for', note:'Browse Fiverr, Gumroad, or Etsy in your areas of interest for 1 hour'},
+  {id:'bm4', title:'Pick 1 idea to pursue',              note:'Narrow down to one concept worth validating — commit to it'},
+  {id:'bm5', title:'Validate with real people',          note:'Ask 3 real people if they would pay for your idea'},
+  {id:'bm6', title:'Define your offer clearly',          note:'What exactly you sell, who buys it, and what you charge'},
+  {id:'bm7', title:'Land the first sale',                note:'One real transaction from a real person — proof it works'},
+  {id:'bm8', title:'Reach $500 / month',                 note:'Halfway — now you know the model works'},
+  {id:'bm9', title:'Reach $1,000 / month 🎯',            note:'The goal — consistent, repeatable monthly revenue'},
+];
+
+// ── DEFAULT TASKS ─────────────────────────────────────────────────────────────
+const DEFAULT_TASKS = [
+  {id:'bt1', text:'List 10 skills & things you know well',                  done:false},
+  {id:'bt2', text:'List 5 problems you personally face or see around you',  done:false},
+  {id:'bt3', text:'Browse Fiverr/Gumroad for 1 hour in your interest areas', done:false},
+  {id:'bt4', text:'Do a 30-min search on your top 2 ideas',                 done:false},
+  {id:'bt5', text:'Ask 3 people if they\'d pay for your top idea',          done:false},
+];
+
+// ── STORAGE KEYS ──────────────────────────────────────────────────────────────
+const K = { tasks:'b_tasks', milestones:'b_milestones', streak:'b_streak' };
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+function load(key,fb){try{const v=localStorage.getItem(key);return v!==null?JSON.parse(v):fb;}catch(e){return fb;}}
+function save(key,val){localStorage.setItem(key,JSON.stringify(val));}
+
+let tasks      = load(K.tasks, DEFAULT_TASKS);
+let milestones = load(K.milestones, []);
+let streak     = load(K.streak, []);
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+document.getElementById('dateLine').textContent =
+  new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+buildMilestones();
+renderTasks();
+renderStreakDots();
+
+// ── MILESTONES ────────────────────────────────────────────────────────────────
+function buildMilestones() {
+  const list = document.getElementById('b-milestone-list');
+  list.innerHTML = '';
+  MILESTONES.forEach(m => {
+    const isDone = milestones.includes(m.id);
+    const el = document.createElement('div');
+    el.className = 'milestone purple' + (isDone ? ' done' : '');
+    el.onclick = () => toggleMilestone(m.id);
+    el.innerHTML = `
+      <div class="m-check"></div>
+      <div class="m-body">
+        <div class="m-title">${m.title}</div>
+        <div class="m-note">${m.note}</div>
+      </div>
+    `;
+    list.appendChild(el);
+  });
+}
+
+function toggleMilestone(id) {
+  const idx = milestones.indexOf(id);
+  if (idx >= 0) milestones.splice(idx,1); else milestones.push(id);
+  save(K.milestones, milestones);
+  buildMilestones();
+  markStreak();
+}
+
+// ── TASKS ─────────────────────────────────────────────────────────────────────
+function renderTasks() {
+  const list = document.getElementById('b-tasks-list');
+  list.innerHTML = '';
+  tasks.forEach(t => {
+    const el = document.createElement('div');
+    el.className = 'week-task purple' + (t.done ? ' done' : '');
+    el.onclick = () => toggleTask(t.id);
+    el.innerHTML = `
+      <div class="wt-box"></div>
+      <div class="wt-body"><div class="wt-text">${t.text}</div></div>
+    `;
+    list.appendChild(el);
+  });
+  updateProgress();
+}
+
+function toggleTask(id) {
+  const t = tasks.find(x => x.id===id);
+  if (t) { t.done = !t.done; save(K.tasks, tasks); }
+  renderTasks();
+  markStreak();
+}
+
+function addTask() {
+  const input = document.getElementById('b-new-task');
+  const text = input.value.trim();
+  if (!text) return;
+  tasks.push({id:'bt'+Date.now(), text, done:false});
+  save(K.tasks, tasks);
+  input.value = '';
+  renderTasks();
+}
+
+function updateProgress() {
+  const done  = tasks.filter(t=>t.done).length;
+  const total = tasks.length;
+  const pct   = total ? Math.round((done/total)*100) : 0;
+  document.getElementById('b-prog-fill').style.width = pct + '%';
+  document.getElementById('b-pct-label').textContent = `${done} / ${total} done`;
+}
+
+// ── STREAK ────────────────────────────────────────────────────────────────────
+function markStreak() {
+  const today = new Date().toDateString();
+  if (!streak.includes(today)) { streak.push(today); save(K.streak, streak); renderStreakDots(); }
+}
+
+function renderStreakDots() {
+  const el = document.getElementById('b-streak-dots');
+  el.innerHTML = '';
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (streak.includes(d.toDateString()) ? ' purple' : '');
+    dot.title = d.toDateString();
+    el.appendChild(dot);
+  }
+}
+</script>
+</body>
+</html>
