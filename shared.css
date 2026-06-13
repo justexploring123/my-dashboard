@@ -1,0 +1,274 @@
+/* ============================================================
+   shared.css — SINGLE SOURCE OF TRUTH
+   DO NOT modify CSS variables or component styles in individual
+   HTML files. All changes to design come here.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Amiri:wght@400;700&display=swap');
+
+/* ============================================================
+   DESIGN TOKENS — locked, never change key names
+   ============================================================ */
+:root {
+  /* Backgrounds */
+  --bg:        #0f0f13;
+  --surface:   #17171e;
+  --surface2:  #1e1e28;
+  --surface3:  #25252f;
+
+  /* Borders */
+  --border:    rgba(255,255,255,0.07);
+  --border2:   rgba(255,255,255,0.12);
+
+  /* Text */
+  --text:      #f0eff5;
+  --text2:     #9b99b0;
+  --text3:     #5e5c72;
+
+  /* Goal accent colours */
+  --gold:        #c9a84c;
+  --gold-dim:    rgba(201,168,76,0.12);
+  --gold-glow:   rgba(201,168,76,0.25);
+
+  --teal:        #3ecfb2;
+  --teal-dim:    rgba(62,207,178,0.1);
+
+  --blue:        #5b9cf6;
+  --blue-dim:    rgba(91,156,246,0.1);
+
+  --coral:       #f07060;
+  --coral-dim:   rgba(240,112,96,0.1);
+
+  --green:       #5bcf8a;
+  --green-dim:   rgba(91,207,138,0.1);
+
+  --purple:      #9b7ff4;
+  --purple-dim:  rgba(155,127,244,0.1);
+
+  /* Shape */
+  --radius:    12px;
+  --radius-sm: 8px;
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.shell { max-width: 900px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+.header { margin-bottom: 2.5rem; }
+.date-line {
+  font-size: 12px; letter-spacing: 0.1em;
+  color: var(--text3); text-transform: uppercase; margin-bottom: 6px;
+}
+.header h1 { font-size: 26px; font-weight: 500; color: var(--text); }
+.header h1 span.accent-gold   { color: var(--gold); }
+.header h1 span.accent-teal   { color: var(--teal); }
+.header h1 span.accent-blue   { color: var(--blue); }
+.header h1 span.accent-purple { color: var(--purple); }
+
+/* Back link */
+.back-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--text3); text-decoration: none;
+  margin-bottom: 1.5rem; transition: color 0.15s;
+}
+.back-link:hover { color: var(--text2); }
+
+/* ============================================================
+   NAVIGATION BAR (used on index.html)
+   ============================================================ */
+.nav { display: flex; gap: 8px; margin-bottom: 2rem; flex-wrap: wrap; }
+.nav-btn {
+  padding: 9px 20px; border-radius: 99px;
+  border: 1px solid var(--border2); background: transparent;
+  color: var(--text2); font-family: 'Inter', sans-serif; font-size: 13px;
+  cursor: pointer; transition: all 0.2s; text-decoration: none;
+  display: inline-block;
+}
+.nav-btn:hover { color: var(--text); background: var(--surface2); }
+.nav-btn.gold   { border-color: var(--gold);   color: var(--gold); }
+.nav-btn.teal   { border-color: var(--teal);   color: var(--teal); }
+.nav-btn.blue   { border-color: var(--blue);   color: var(--blue); }
+.nav-btn.purple { border-color: var(--purple); color: var(--purple); }
+
+/* ============================================================
+   CARDS
+   ============================================================ */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+}
+.card-title {
+  font-size: 11px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--text3);
+  margin-bottom: 1rem; font-weight: 500;
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn {
+  padding: 9px 20px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border2); background: var(--surface2);
+  color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px;
+  cursor: pointer; transition: all 0.15s; font-weight: 500;
+}
+.btn:hover { background: var(--surface3); }
+.btn-sm   { padding: 6px 14px; font-size: 12px; }
+.btn-gold   { background: var(--gold);   border-color: var(--gold);   color: #0f0f13; }
+.btn-teal   { background: var(--teal);   border-color: var(--teal);   color: #0f0f13; }
+.btn-blue   { background: var(--blue);   border-color: var(--blue);   color: #0f0f13; }
+.btn-purple { background: var(--purple); border-color: var(--purple); color: #0f0f13; }
+.btn-gold:hover   { opacity: 0.88; }
+.btn-teal:hover   { opacity: 0.88; }
+.btn-blue:hover   { opacity: 0.88; }
+.btn-purple:hover { opacity: 0.88; }
+.btn-danger { border-color: var(--coral); color: var(--coral); background: var(--coral-dim); }
+
+/* ============================================================
+   PROGRESS BAR
+   ============================================================ */
+.prog-bar-wrap { margin-bottom: 1.25rem; }
+.prog-meta {
+  display: flex; justify-content: space-between;
+  font-size: 12px; color: var(--text3); margin-bottom: 6px;
+}
+.prog-bar { height: 4px; background: var(--surface3); border-radius: 99px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 99px; transition: width 0.4s ease; }
+.prog-fill.gold   { background: var(--gold); }
+.prog-fill.teal   { background: var(--teal); }
+.prog-fill.blue   { background: var(--blue); }
+.prog-fill.purple { background: var(--purple); }
+
+/* ============================================================
+   STREAK DOTS
+   ============================================================ */
+.streak-dots { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px; }
+.dot {
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--surface3); border: 1px solid var(--border);
+}
+.dot.gold   { background: var(--gold);   border-color: var(--gold); }
+.dot.teal   { background: var(--teal);   border-color: var(--teal); }
+.dot.blue   { background: var(--blue);   border-color: var(--blue); }
+.dot.purple { background: var(--purple); border-color: var(--purple); }
+
+/* ============================================================
+   MILESTONE ROW
+   ============================================================ */
+.milestone {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 14px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: var(--surface2);
+  cursor: pointer; transition: all 0.15s; margin-bottom: 8px;
+}
+.milestone.done { opacity: 0.55; }
+.milestone.done .m-title { text-decoration: line-through; color: var(--text3); }
+.m-check {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 1.5px solid var(--border2); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; margin-top: 1px;
+}
+.milestone.done .m-check::after { content: '✓'; font-size: 11px; color: #0f0f13; font-weight: 700; }
+.milestone.done.teal .m-check { background: var(--teal); border-color: var(--teal); }
+.milestone.done.gold .m-check { background: var(--gold); border-color: var(--gold); }
+.milestone.done.blue .m-check { background: var(--blue); border-color: var(--blue); }
+.milestone.done.purple .m-check { background: var(--purple); border-color: var(--purple); }
+.m-body .m-title { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
+.m-body .m-note  { font-size: 12px; color: var(--text2); line-height: 1.4; }
+.m-badge {
+  margin-left: auto; font-size: 11px; padding: 3px 10px;
+  border-radius: 99px; flex-shrink: 0; font-weight: 500; align-self: flex-start;
+}
+.badge-now    { background: rgba(240,112,96,0.15); color: var(--coral); border: 1px solid rgba(240,112,96,0.25); }
+.badge-soon   { background: rgba(62,207,178,0.12); color: var(--teal);  border: 1px solid rgba(62,207,178,0.2); }
+.badge-later  { background: var(--surface3); color: var(--text2); border: 1px solid var(--border); }
+
+/* ============================================================
+   WEEK TASK ROW
+   ============================================================ */
+.week-task {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 11px 13px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: var(--surface2);
+  cursor: pointer; transition: all 0.15s; margin-bottom: 6px;
+}
+.week-task.done { opacity: 0.5; }
+.week-task.done .wt-text { text-decoration: line-through; }
+.wt-box {
+  width: 18px; height: 18px; border-radius: 4px;
+  border: 1.5px solid var(--border2); flex-shrink: 0; margin-top: 1px;
+  display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+}
+.week-task.done .wt-box::after { content: '✓'; font-size: 10px; color: #fff; font-weight: 700; }
+.week-task.done.purple .wt-box { background: var(--purple); border-color: var(--purple); }
+.week-task.done.gold   .wt-box { background: var(--gold);   border-color: var(--gold); }
+.week-task.done.teal   .wt-box { background: var(--teal);   border-color: var(--teal); }
+.week-task.done.blue   .wt-box { background: var(--blue);   border-color: var(--blue); }
+.wt-body .wt-text { font-size: 14px; color: var(--text); }
+.wt-body .wt-sub  { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+/* ============================================================
+   TEXT INPUT
+   ============================================================ */
+.input {
+  padding: 9px 12px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border2); background: var(--surface2);
+  color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px;
+  width: 100%;
+}
+.input::placeholder { color: var(--text3); }
+.input-row { display: flex; gap: 8px; margin-top: 10px; }
+.input-row .input { flex: 1; width: auto; }
+input[type=number].input { width: 90px; }
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7); z-index: 100;
+  align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: var(--radius); padding: 1.5rem; max-width: 480px; width: 90%;
+}
+.modal h3 { font-size: 17px; font-weight: 500; margin-bottom: 8px; }
+.modal p  { font-size: 14px; color: var(--text2); margin-bottom: 1.25rem; line-height: 1.6; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 99px; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 520px) {
+  .shell { padding: 1.25rem 1rem 3rem; }
+}
