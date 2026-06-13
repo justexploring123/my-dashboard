@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Driving — Dashboard</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+  .target-row {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .target-row label { font-size: 13px; color: var(--text2); }
+  .days-left { font-size: 15px; font-weight: 500; color: var(--teal); }
+
+  .session-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+  .session-row label { font-size: 13px; color: var(--text2); }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <a href="index.html" class="back-link">← Dashboard</a>
+
+  <div class="header">
+    <div class="date-line" id="dateLine"></div>
+    <h1>🚗 <span class="accent-teal">Driver's License</span> — Uzbekistan</h1>
+  </div>
+
+  <!-- TARGET DATE -->
+  <div class="card">
+    <div class="card-title">Target date</div>
+    <div class="target-row">
+      <label>I want my license by:</label>
+      <input type="date" class="input" id="d-target-input" style="width:180px">
+      <span class="days-left" id="d-days-left"></span>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px;">
+      <div class="card-title" style="margin-bottom:0">Milestones</div>
+      <span style="font-size:13px;color:var(--text2)" id="d-pct-label">0 / 10 done</span>
+    </div>
+    <div class="prog-bar-wrap">
+      <div class="prog-bar"><div class="prog-fill teal" id="d-prog-fill" style="width:0%"></div></div>
+    </div>
+    <div id="milestone-list"></div>
+  </div>
+
+  <!-- STUDY LOG -->
+  <div class="card">
+    <div class="card-title">Theory study log</div>
+    <div class="session-row">
+      <label>Minutes today:</label>
+      <input type="number" class="input" id="d-mins-input" min="0" max="300" placeholder="0" style="width:90px">
+      <button class="btn btn-sm btn-teal" onclick="logSession()">Log</button>
+    </div>
+    <div style="font-size:13px;color:var(--text2)">
+      Total theory study: <strong id="d-total-mins">0</strong> min
+    </div>
+    <div style="font-size:12px;color:var(--text3);margin-top:4px">Last 14 days</div>
+    <div class="streak-dots" id="d-streak-dots"></div>
+  </div>
+
+</div>
+
+<script>
+// ── MILESTONES DATA ───────────────────────────────────────────────────────────
+const MILESTONES = [
+  {id:'d1', title:'Get medical certificate (Form 083-U)',
+   note:'Visit a certified clinic for the fitness-to-drive medical exam', badge:'now'},
+  {id:'d2', title:'Research & choose a driving school in Tashkent',
+   note:'Compare prices — full license typically costs 8–10M UZS total', badge:'now'},
+  {id:'d3', title:'Enroll in driving school',
+   note:'Practical lessons are mandatory; enroll early as slots fill fast', badge:'now'},
+  {id:'d4', title:'Start self-studying theory',
+   note:'Since Feb 2026 classroom theory is optional — you can self-study at your own pace', badge:'now'},
+  {id:'d5', title:'Complete all practical training sessions',
+   note:'All lessons must be completed and logged electronically by the school', badge:'soon'},
+  {id:'d6', title:'Register for the exam at the Unified Examination Center',
+   note:'Register online via yaxshihaydovchi.uz, pick your exam date, bring passport', badge:'soon'},
+  {id:'d7', title:'Pass the theory exam',
+   note:'20 questions, 25 minutes — must score 18/20 or higher to pass', badge:'soon'},
+  {id:'d8', title:'Pass the practical driving test',
+   note:'Can be taken same day as theory (costs extra ~1M UZS) or on another day', badge:'soon'},
+  {id:'d9', title:'Pay all fees',
+   note:'Budget 8–10 million UZS total (school fees + state exam fees + license fee)', badge:'later'},
+  {id:'d10', title:'Receive your Category B license 🎉',
+   note:'Valid for 10 years in Uzbekistan — you\'re done!', badge:'later'},
+];
+
+// ── STORAGE KEYS ──────────────────────────────────────────────────────────────
+const K = { done:'d_done', target:'d_target', minsTotal:'d_mins_total', streak:'d_streak' };
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+function load(key, fb) { try{const v=localStorage.getItem(key);return v!==null?JSON.parse(v):fb;}catch(e){return fb;} }
+function save(key,val) { localStorage.setItem(key,JSON.stringify(val)); }
+
+let done      = load(K.done, []);
+let target    = load(K.target, '');
+let minsTotal = load(K.minsTotal, 0);
+let streak    = load(K.streak, []);
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+document.getElementById('dateLine').textContent =
+  new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+document.getElementById('d-total-mins').textContent = minsTotal;
+if (target) { document.getElementById('d-target-input').value = target; updateDaysLeft(); }
+
+buildMilestones();
+renderProgress();
+renderStreakDots();
+
+document.getElementById('d-target-input').addEventListener('change', function() {
+  target = this.value; save(K.target, target); updateDaysLeft();
+});
+
+// ── MILESTONES ────────────────────────────────────────────────────────────────
+function buildMilestones() {
+  const list = document.getElementById('milestone-list');
+  list.innerHTML = '';
+  MILESTONES.forEach(m => {
+    const isDone = done.includes(m.id);
+    const el = document.createElement('div');
+    el.className = 'milestone teal' + (isDone ? ' done' : '');
+    el.onclick = () => toggleMilestone(m.id);
+    const badgeCls = m.badge==='now'?'badge-now':m.badge==='soon'?'badge-soon':'badge-later';
+    const badgeTxt = m.badge==='now'?'Do now':m.badge==='soon'?'By Sep':'Later';
+    el.innerHTML = `
+      <div class="m-check"></div>
+      <div class="m-body">
+        <div class="m-title">${m.title}</div>
+        <div class="m-note">${m.note}</div>
+      </div>
+      <span class="m-badge ${badgeCls}">${badgeTxt}</span>
+    `;
+    list.appendChild(el);
+  });
+}
+
+function toggleMilestone(id) {
+  const idx = done.indexOf(id);
+  if (idx >= 0) done.splice(idx,1); else done.push(id);
+  save(K.done, done);
+  buildMilestones();
+  renderProgress();
+}
+
+// ── PROGRESS ──────────────────────────────────────────────────────────────────
+function renderProgress() {
+  const pct = Math.round((done.length / MILESTONES.length) * 100);
+  document.getElementById('d-prog-fill').style.width = pct + '%';
+  document.getElementById('d-pct-label').textContent = `${done.length} / ${MILESTONES.length} done`;
+}
+
+// ── TARGET DATE ───────────────────────────────────────────────────────────────
+function updateDaysLeft() {
+  const el = document.getElementById('d-days-left');
+  if (!target) { el.textContent = ''; return; }
+  const diff = Math.ceil((new Date(target) - new Date()) / 86400000);
+  el.textContent = diff > 0 ? `${diff} days to go` : diff === 0 ? 'Today!' : 'Date passed';
+}
+
+// ── SESSION LOG ───────────────────────────────────────────────────────────────
+function logSession() {
+  const mins = parseInt(document.getElementById('d-mins-input').value) || 0;
+  if (mins <= 0) return;
+  minsTotal += mins; save(K.minsTotal, minsTotal);
+  document.getElementById('d-total-mins').textContent = minsTotal;
+  const today = new Date().toDateString();
+  if (!streak.includes(today)) { streak.push(today); save(K.streak, streak); }
+  document.getElementById('d-mins-input').value = '';
+  renderStreakDots();
+}
+
+// ── STREAK DOTS ───────────────────────────────────────────────────────────────
+function renderStreakDots() {
+  const el = document.getElementById('d-streak-dots');
+  el.innerHTML = '';
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (streak.includes(d.toDateString()) ? ' teal' : '');
+    dot.title = d.toDateString();
+    el.appendChild(dot);
+  }
+}
+</script>
+</body>
+</html>
