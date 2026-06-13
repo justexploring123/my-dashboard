@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fitness — Dashboard</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+  .workout-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem;
+  }
+  .workout-btn {
+    padding: 20px; border-radius: var(--radius);
+    border: 1px solid var(--border); background: var(--surface2);
+    color: var(--text); font-family: 'Inter', sans-serif;
+    cursor: pointer; transition: all 0.2s; text-align: center;
+  }
+  .workout-btn:hover   { border-color: var(--blue); }
+  .workout-btn.checked { border-color: var(--blue); background: var(--blue-dim); }
+  .workout-btn .wb-icon  { font-size: 26px; margin-bottom: 8px; }
+  .workout-btn .wb-name  { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+  .workout-btn .wb-label { font-size: 12px; color: var(--text2); }
+  .workout-btn.checked .wb-label { color: var(--blue); }
+
+  .rep-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem; }
+  .rep-card {
+    padding: 16px; border-radius: var(--radius);
+    border: 1px solid var(--border); background: var(--surface2);
+  }
+  .rc-label   { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .rc-current { font-size: 40px; font-weight: 300; color: var(--text); margin-bottom: 4px; }
+  .rc-best    { font-size: 12px; color: var(--text3); margin-bottom: 10px; }
+  .rc-controls { display: flex; gap: 6px; }
+  .rc-btn {
+    flex: 1; padding: 8px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border2); background: var(--surface3);
+    color: var(--text); font-family: 'Inter', sans-serif; font-size: 18px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .rc-btn:hover { background: var(--surface2); border-color: var(--blue); color: var(--blue); }
+  .rc-btn.log-btn { font-size: 12px; flex: 2; }
+
+  .history-entry {
+    display: inline-block; margin: 3px 5px 3px 0;
+    padding: 4px 10px; border-radius: 99px;
+    background: var(--surface3); font-size: 12px; color: var(--text2);
+  }
+  .history-entry strong { color: var(--text); }
+
+  @media(max-width:520px) {
+    .workout-grid, .rep-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <a href="index.html" class="back-link">← Dashboard</a>
+
+  <div class="header">
+    <div class="date-line" id="dateLine"></div>
+    <h1>💪 <span class="accent-blue">Home Fitness</span></h1>
+  </div>
+
+  <!-- GOALS BANNER -->
+  <div class="card" style="background:var(--blue-dim);border-color:rgba(91,156,246,0.2);">
+    <div style="display:flex;gap:2rem;flex-wrap:wrap;">
+      <div>
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px;">Push-up goal</div>
+        <div style="font-size:22px;font-weight:300;color:var(--blue)">30 reps</div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px;">Pull-up goal</div>
+        <div style="font-size:22px;font-weight:300;color:var(--blue)">10 reps</div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px;">Workout days</div>
+        <div style="font-size:22px;font-weight:300;color:var(--blue)" id="total-workout-days">0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TODAY CHECK-IN -->
+  <div class="card">
+    <div class="card-title">Today's workout check-in</div>
+    <div class="workout-grid">
+      <button class="workout-btn" id="btn-pushup" onclick="toggleWorkout('pushup')">
+        <div class="wb-icon">🔥</div>
+        <div class="wb-name">Push-ups</div>
+        <div class="wb-label" id="label-pushup">Not done today</div>
+      </button>
+      <button class="workout-btn" id="btn-pullup" onclick="toggleWorkout('pullup')">
+        <div class="wb-icon">⬆️</div>
+        <div class="wb-name">Pull-ups</div>
+        <div class="wb-label" id="label-pullup">Not done today</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- REP LOGGER -->
+  <div class="card">
+    <div class="card-title">Log a set</div>
+    <div class="rep-grid">
+      <div class="rep-card">
+        <div class="rc-label">Push-ups</div>
+        <div class="rc-current" id="pushup-count">0</div>
+        <div class="rc-best" id="pushup-best">Best: 0</div>
+        <div class="rc-controls">
+          <button class="rc-btn" onclick="adj('pushup',-1)">−</button>
+          <button class="rc-btn" onclick="adj('pushup', 1)">+</button>
+          <button class="rc-btn log-btn" onclick="logSet('pushup')">Log set</button>
+        </div>
+      </div>
+      <div class="rep-card">
+        <div class="rc-label">Pull-ups</div>
+        <div class="rc-current" id="pullup-count">0</div>
+        <div class="rc-best" id="pullup-best">Best: 0</div>
+        <div class="rc-controls">
+          <button class="rc-btn" onclick="adj('pullup',-1)">−</button>
+          <button class="rc-btn" onclick="adj('pullup', 1)">+</button>
+          <button class="rc-btn log-btn" onclick="logSet('pullup')">Log set</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="card">
+    <div class="card-title">Recent sets</div>
+    <div id="f-history" style="min-height:40px;"></div>
+    <div style="font-size:12px;color:var(--text3);margin-top:12px;">Workout streak — last 14 days</div>
+    <div class="streak-dots" id="f-streak-dots"></div>
+  </div>
+
+</div>
+
+<script>
+// ── STORAGE KEYS ──────────────────────────────────────────────────────────────
+const K = {
+  workoutDate: 'f_workout_date',
+  pushupDone:  'f_pushup_done',
+  pullupDone:  'f_pullup_done',
+  pushupBest:  'f_pushup_best',
+  pullupBest:  'f_pullup_best',
+  history:     'f_history',
+  streak:      'f_streak',
+};
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+function load(key,fb){try{const v=localStorage.getItem(key);return v!==null?JSON.parse(v):fb;}catch(e){return fb;}}
+function save(key,val){localStorage.setItem(key,JSON.stringify(val));}
+
+const today = new Date().toDateString();
+// reset daily check-in if new day
+if (load(K.workoutDate,'') !== today) {
+  save(K.pushupDone, false); save(K.pullupDone, false); save(K.workoutDate, today);
+}
+
+let pushupDone = load(K.pushupDone, false);
+let pullupDone = load(K.pullupDone, false);
+let pushupBest = load(K.pushupBest, 0);
+let pullupBest = load(K.pullupBest, 0);
+let history    = load(K.history, []);
+let streak     = load(K.streak, []);
+
+let tempPushup = 0, tempPullup = 0;
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+document.getElementById('dateLine').textContent =
+  new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+if (pushupDone) setChecked('pushup', true);
+if (pullupDone) setChecked('pullup', true);
+document.getElementById('pushup-best').textContent = `Best: ${pushupBest}`;
+document.getElementById('pullup-best').textContent = `Best: ${pullupBest}`;
+document.getElementById('total-workout-days').textContent = streak.length;
+renderHistory();
+renderStreakDots();
+
+// ── WORKOUT CHECK-IN ──────────────────────────────────────────────────────────
+function toggleWorkout(type) {
+  if (type === 'pushup') { pushupDone = !pushupDone; save(K.pushupDone, pushupDone); setChecked('pushup', pushupDone); }
+  else                   { pullupDone = !pullupDone; save(K.pullupDone, pullupDone); setChecked('pullup', pullupDone); }
+  if (pushupDone || pullupDone) {
+    if (!streak.includes(today)) { streak.push(today); save(K.streak, streak); }
+  }
+  document.getElementById('total-workout-days').textContent = streak.length;
+  renderStreakDots();
+}
+
+function setChecked(type, on) {
+  const btn   = document.getElementById('btn-'+type);
+  const label = document.getElementById('label-'+type);
+  if (on) { btn.classList.add('checked'); label.textContent = 'Done today ✓'; }
+  else     { btn.classList.remove('checked'); label.textContent = 'Not done today'; }
+}
+
+// ── REP LOGGER ────────────────────────────────────────────────────────────────
+function adj(type, delta) {
+  if (type === 'pushup') { tempPushup = Math.max(0, tempPushup+delta); document.getElementById('pushup-count').textContent = tempPushup; }
+  else                   { tempPullup = Math.max(0, tempPullup+delta); document.getElementById('pullup-count').textContent = tempPullup; }
+}
+
+function logSet(type) {
+  const val = type === 'pushup' ? tempPushup : tempPullup;
+  if (val === 0) return;
+  const dateStr = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  history.push({type, val, date: dateStr});
+  if (history.length > 30) history = history.slice(-30);
+  save(K.history, history);
+  if (type === 'pushup') {
+    if (val > pushupBest) { pushupBest = val; save(K.pushupBest, pushupBest); }
+    tempPushup = 0; document.getElementById('pushup-count').textContent = 0;
+    document.getElementById('pushup-best').textContent = `Best: ${pushupBest}`;
+  } else {
+    if (val > pullupBest) { pullupBest = val; save(K.pullupBest, pullupBest); }
+    tempPullup = 0; document.getElementById('pullup-count').textContent = 0;
+    document.getElementById('pullup-best').textContent = `Best: ${pullupBest}`;
+  }
+  renderHistory();
+}
+
+function renderHistory() {
+  const el = document.getElementById('f-history');
+  if (!history.length) { el.innerHTML = '<span style="font-size:13px;color:var(--text3)">No sets logged yet.</span>'; return; }
+  el.innerHTML = history.slice(-10).reverse().map(h =>
+    `<span class="history-entry">${h.date} · ${h.type==='pushup'?'Push-up':'Pull-up'}: <strong>${h.val}</strong></span>`
+  ).join('');
+}
+
+// ── STREAK DOTS ───────────────────────────────────────────────────────────────
+function renderStreakDots() {
+  const el = document.getElementById('f-streak-dots');
+  el.innerHTML = '';
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (streak.includes(d.toDateString()) ? ' blue' : '');
+    dot.title = d.toDateString();
+    el.appendChild(dot);
+  }
+}
+</script>
+</body>
+</html>
